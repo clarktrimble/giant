@@ -9,8 +9,6 @@ import (
 	"github.com/clarktrimble/giant/rando"
 )
 
-// Todo: giant.Logger ifc is awkward? prolly dont want/need extra pkg's here?
-
 // LogRt implements the Tripper interface
 type LogRt struct {
 	Logger giant.Logger
@@ -36,9 +34,6 @@ func (rt *LogRt) RoundTrip(request *http.Request) (response *http.Response, err 
 	if err != nil {
 		rt.Logger.Error(ctx, "roundtrip logger failed to get request body", err)
 	}
-
-	// Todo: passthru
-	// Todo: redact from headers
 
 	rt.Logger.Info(ctx, "sending request",
 		"method", request.Method,

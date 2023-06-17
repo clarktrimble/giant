@@ -7,6 +7,10 @@ import (
 	"unsafe"
 )
 
+// Todo: break down and push into tiny mod
+// Todo: provide for passing in a seed for unit
+// Todo: provide for passing in char set
+
 // Rando generates a random string of length n
 func Rando(n int) string {
 

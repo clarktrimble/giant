@@ -17,8 +17,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Todo: query params
-
 // Config represents giant config
 type Config struct {
 	// BaseUri is the scheme, domain, optionally port and/or path
@@ -44,11 +42,7 @@ type Giant struct {
 // New constructs a new client from Config
 func (cfg *Config) New() *Giant {
 
-	// Todo: settle timeouts
-	// Todo: still need transport as RT??
-
-	var transport http.RoundTripper
-	transport = &http.Transport{
+	transport := &http.Transport{
 		Dial:                  (&net.Dialer{Timeout: cfg.TimeoutShort}).Dial,
 		ResponseHeaderTimeout: cfg.TimeoutShort,
 		TLSClientConfig:       &tls.Config{InsecureSkipVerify: cfg.SkipVerify},

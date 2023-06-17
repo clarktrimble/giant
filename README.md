@@ -15,7 +15,7 @@ Why not just use the stdlib client?
 
 ## Useage
 
-I often like to implement a service layer:
+A service layer can be a good approach:
 
     type Client interface {
       SendObject(ctx context.Context, method, path string, snd, rcv any) (err error)
@@ -27,8 +27,10 @@ I often like to implement a service layer:
 
     func (svc *Svc) GetHourly(ctx context.Context, lat, lon float64) (hourly Hourly, err error) {
 
+      path = fmt.Sprintf("/v1/forecast?latitude=%.2f&longitude=%.2f", lat, lon)
       var fc forecast
-      err = svc.Client.SendObject(ctx, "GET", path(lat, lon), nil, &fc)
+
+      err = svc.Client.SendObject(ctx, "GET", "/v1/forecast", nil, &fc)
       if err != nil {
         return
       }
@@ -39,12 +41,46 @@ I often like to implement a service layer:
 
 and then inject from above:
 
-    client := cfg.Client.New()
+    giant := giantCfg.New()
+    giant.Use(&statusrt.StatusRt{})
+    giant.Use(&logrt.LogRt{Logger: lgr})
+
+    weatherSvc := &svc.Svc{Client: giant}
+    hourly, err := weatherSvc.GetHourly(ctx, lat, lon)
+    ...
+
+## Middleware
+
+Giant adds the Tripper interface for relatively clean middleware-like wrapping of request and response:
+
+    type Tripper interface {
+      http.RoundTripper
+      Wrap(next http.RoundTripper)
+    }
+
+When a Tripper is passed to Use, its Wrap method is called, replacing the top-level tripper.
+
+    client := giantCfg.New()
     client.Use(&statusrt.StatusRt{})
     client.Use(&logrt.LogRt{Logger: lgr})
 
-    weatherSvc := &svc.Svc{Client: client}
-    hourly, err := weatherSvc.GetHourly(ctx, lat, lon)
+In the above example, LogRt will be the  first to 'see' the request, then StatusRt, then http transport.
+On th way back, StatusRt 'sees' the response, followed by LogRt.
+
+## Test and Run
+
+    giant % go test --count=1 ./...
+    giant % go run github.com/clarktrimble/giant/examples/weather
+
+## Golang (Anti) Idioms
+
+I dig the Golang community, but I might be a touch rouge with:
+
+  - multi-char variable names
+  - named return parameters
+  - BDD/DSL testing
+
+All in the name of readability, which of course, tends towards the subjective.
 
 ## License
 

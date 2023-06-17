@@ -1,4 +1,4 @@
-// Package svc demonstrates a client service layer built with giant
+// Package svc demonstrates an api client service layer built with giant
 package svc
 
 import (

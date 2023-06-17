@@ -19,8 +19,6 @@ func TestGiant(t *testing.T) {
 	RunSpecs(t, "Giant Suite")
 }
 
-// Todo: think about using test suite to test interfacys???
-
 var _ = Describe("Giant", func() {
 
 	var (
