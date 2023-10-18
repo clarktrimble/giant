@@ -1,4 +1,4 @@
-package main
+package minlog
 
 import (
 	"context"
@@ -8,9 +8,9 @@ import (
 
 // implement a (sub)minimal logger to give an idea of what's logged
 
-type minLog struct{}
+type MinLog struct{}
 
-func (ml *minLog) Info(ctx context.Context, msg string, kv ...any) {
+func (ml *MinLog) Info(ctx context.Context, msg string, kv ...any) {
 
 	// non-string and blank values are logged as "*"
 
@@ -26,13 +26,13 @@ func (ml *minLog) Info(ctx context.Context, msg string, kv ...any) {
 	fmt.Printf("msg > %s  %s\n", msg, strings.Join(strs, "|"))
 }
 
-func (ml *minLog) Error(ctx context.Context, msg string, err error, kv ...any) {
+func (ml *MinLog) Error(ctx context.Context, msg string, err error, kv ...any) {
 
 	// Todo: include err
 	ml.Info(ctx, msg, kv)
 }
 
-func (ml *minLog) WithFields(ctx context.Context, kv ...any) context.Context {
+func (ml *MinLog) WithFields(ctx context.Context, kv ...any) context.Context {
 
 	// Todo: stash kv
 	return ctx

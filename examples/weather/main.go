@@ -6,9 +6,11 @@ import (
 	"os"
 
 	"github.com/clarktrimble/giant"
-	"github.com/clarktrimble/giant/examples/weather/svc"
 	"github.com/clarktrimble/giant/logrt"
 	"github.com/clarktrimble/giant/statusrt"
+
+	"github.com/clarktrimble/giant/examples/weather/minlog"
+	"github.com/clarktrimble/giant/examples/weather/svc"
 )
 
 var (
@@ -30,7 +32,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	lgr := &minLog{}
+	lgr := &minlog.MinLog{}
 
 	client := cfg.Client.New()
 	client.Use(&statusrt.StatusRt{})
