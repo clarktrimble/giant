@@ -24,13 +24,13 @@ type Config struct {
 	// BaseUri is the scheme, domain, optionally port and/or path
 	// though which the client connects to a webserver
 	// for example: http://192.168.64.3:4080/graphql
-	BaseUri string `json:"base_uri" required:"true"`
+	BaseUri string `json:"base_uri" desc:"ex: http://llp.org:4080/graphql" required:"true"`
 	// Timeout is the overall request timeout
-	Timeout time.Duration `json:"timeout" default:"1m"`
+	Timeout time.Duration `json:"timeout" desc:"request timeout" default:"1m"`
 	// TimeoutShort is the dialer and response header timeout
-	TimeoutShort time.Duration `json:"timeout_short" default:"10s"`
+	TimeoutShort time.Duration `json:"timeout_short" desc:"dialer and header timeout" default:"10s"`
 	// SkipVerify skips verification of ssl certificates (dev only pls!)
-	SkipVerify bool `json:"skip_verify"`
+	SkipVerify bool `json:"skip_verify" desc:"skip cert verification"`
 }
 
 // Giant represents an http client
@@ -47,7 +47,7 @@ func (cfg *Config) New() *Giant {
 	// Todo: settle timeouts
 	// Todo: still need transport as RT??
 
-	var transport http.RoundTripper
+	var transport http.RoundTripper //nolint:gosimple // Need type RoundTripper!
 	transport = &http.Transport{
 		Dial:                  (&net.Dialer{Timeout: cfg.TimeoutShort}).Dial,
 		ResponseHeaderTimeout: cfg.TimeoutShort,
@@ -98,8 +98,7 @@ func (giant *Giant) Send(ctx context.Context, rq Request) (response *http.Respon
 	return
 }
 
-// SendJson constructs a request, sends and recieves json
-// closing the response body
+// SendJson constructs a request, sends and recieves json closing the response body
 func (giant *Giant) SendJson(ctx context.Context, method, path string, body io.Reader) (data []byte, err error) {
 
 	rq := Request{
