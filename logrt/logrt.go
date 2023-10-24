@@ -6,10 +6,18 @@ import (
 	"time"
 
 	"github.com/clarktrimble/giant"
-	"github.com/clarktrimble/giant/rando"
+	"github.com/clarktrimble/hondo"
 )
 
 // Todo: giant.Logger ifc is awkward? prolly dont want/need extra pkg's here?
+
+const (
+	idLen int = 7
+)
+
+var (
+	RedactHeaders = map[string]bool{}
+)
 
 // LogRt implements the Tripper interface
 type LogRt struct {
@@ -26,10 +34,9 @@ func (rt *LogRt) Wrap(next http.RoundTripper) {
 func (rt *LogRt) RoundTrip(request *http.Request) (response *http.Response, err error) {
 
 	start := time.Now()
-	request_id := rando.Rando(requestIdLength)
 
 	ctx := request.Context()
-	ctx = rt.Logger.WithFields(ctx, "request_id", request_id)
+	ctx = rt.Logger.WithFields(ctx, "request_id", hondo.Rand(idLen))
 	request = request.WithContext(ctx)
 
 	reqBody, err := requestBody(request)
@@ -45,7 +52,7 @@ func (rt *LogRt) RoundTrip(request *http.Request) (response *http.Response, err 
 		"scheme", request.URL.Scheme,
 		"host", request.URL.Host,
 		"path", request.URL.Path,
-		"headers", request.Header,
+		"headers", redact(request.Header),
 		"query", request.URL.Query(),
 		"body", string(reqBody),
 	)
@@ -73,4 +80,16 @@ func (rt *LogRt) RoundTrip(request *http.Request) (response *http.Response, err 
 
 // unexported
 
-const requestIdLength int = 7
+func redact(header http.Header) (redacted http.Header) {
+
+	redacted = header.Clone()
+	for key := range header {
+
+		redacted[key] = header[key]
+		if RedactHeaders[key] {
+			redacted[key] = []string{"--redacted--"}
+		}
+	}
+
+	return
+}
