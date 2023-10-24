@@ -5,7 +5,6 @@ JSON API client for your Golang
 
 ![giant-bw](https://github.com/clarktrimble/giant/assets/5055161/b8cdd603-1d7f-47f4-957f-994aa1648050)
 
-
 ## Why?
 
 Why not just use the stdlib client?
@@ -15,8 +14,9 @@ Why not just use the stdlib client?
  - reuse marshal/unmarshal logics
  - set headers
  - log request/response (tripper)
+ - redact selected headers from logging
 
-## Useage
+## Usage
 
 I often like to implement a service layer:
 

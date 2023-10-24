@@ -2,6 +2,7 @@ package logrt_test
 
 import (
 	"io"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"testing"
@@ -47,27 +48,33 @@ var _ = Describe("LogRt", func() {
 						Status: 200,
 					})
 
+					rand.Seed(1) //nolint:staticcheck // just for unit request_id
+
 					request, err = http.NewRequest("PUT", "https://boxworld.org/cardboard", nil)
 					Expect(err).ToNot(HaveOccurred())
+
+					RedactHeaders = map[string]bool{"X-Authorization-Token": true}
+					request.Header.Set("content-type", "application/json")
+					request.Header.Set("X-Authorization-Token", "this-is-secret")
 				})
+
 				It("logs the request and the response", func() {
 
 					Expect(err).ToNot(HaveOccurred())
 					Expect(lgr.Logged).To(HaveLen(2))
 
-					Expect(lgr.Logged[0]).To(HaveKey("request_id"))
-					Expect(lgr.Logged[0]["request_id"]).To(HaveLen(7))
-					rid := lgr.Logged[0]["request_id"]
-
 					Expect(lgr.Logged[0]).To(Equal(map[string]any{
-						"body":       "",
-						"headers":    http.Header{},
+						"body": "",
+						"headers": http.Header{
+							"Content-Type":          []string{"application/json"},
+							"X-Authorization-Token": []string{"--redacted--"},
+						},
 						"host":       "boxworld.org",
 						"method":     "PUT",
 						"msg":        "sending request",
 						"path":       "/cardboard",
 						"query":      url.Values{},
-						"request_id": rid,
+						"request_id": "GIehp1s",
 						"scheme":     "https",
 					}))
 
@@ -80,7 +87,7 @@ var _ = Describe("LogRt", func() {
 						"headers":    http.Header(nil),
 						"msg":        "received response",
 						"path":       "/cardboard",
-						"request_id": rid,
+						"request_id": "GIehp1s",
 						"status":     200,
 					}))
 
