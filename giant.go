@@ -29,6 +29,8 @@ type Config struct {
 	Timeout time.Duration `json:"timeout" desc:"request timeout" default:"1m"`
 	// TimeoutShort is the dialer and response header timeout
 	TimeoutShort time.Duration `json:"timeout_short" desc:"dialer and header timeout" default:"10s"`
+	// Headers are set when making a request
+	Headers map[string]string
 	// SkipVerify skips verification of ssl certificates (dev only pls!)
 	SkipVerify bool `json:"skip_verify" desc:"skip cert verification"`
 }
@@ -39,6 +41,8 @@ type Giant struct {
 	Client http.Client
 	// BaseUri is as described in Config
 	BaseUri string
+	// Headers are set when making a request
+	Headers map[string]string
 }
 
 // New constructs a new client from Config
@@ -61,6 +65,7 @@ func (cfg *Config) New() *Giant {
 			Timeout:       cfg.Timeout,
 		},
 		BaseUri: cfg.BaseUri,
+		Headers: cfg.Headers,
 	}
 }
 
@@ -82,11 +87,18 @@ type Request struct {
 	Body io.Reader
 	// Headers are set when making a request
 	Headers map[string]string
+	// Todo: want ^^^ stringer for headers??
+	// Todo: post about updating a module, via branchy
 }
 
 // Send sends a request
 // leaving read/close of response body to caller
 func (giant *Giant) Send(ctx context.Context, rq Request) (response *http.Response, err error) {
+
+	// Todo: unit!!
+	for key, val := range giant.Headers {
+		rq.Headers[key] = val
+	}
 
 	request, err := rq.httpRequest(ctx, giant.BaseUri)
 	if err != nil {
