@@ -45,7 +45,6 @@ func (rt *LogRt) RoundTrip(request *http.Request) (response *http.Response, err 
 	}
 
 	// Todo: passthru
-	// Todo: redact from headers
 
 	rt.Logger.Info(ctx, "sending request",
 		"method", request.Method,
