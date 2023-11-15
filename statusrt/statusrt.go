@@ -39,6 +39,7 @@ func (rt *StatusRt) RoundTrip(request *http.Request) (response *http.Response, e
 		} else {
 			err = errors.Errorf("unexpected status code %d with body: %s", response.StatusCode, body)
 		}
+		// Todo: response = nil
 	}
 	return
 }

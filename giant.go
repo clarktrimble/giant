@@ -14,6 +14,9 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/clarktrimble/giant/basicrt"
+	"github.com/clarktrimble/giant/logrt"
+	"github.com/clarktrimble/giant/statusrt"
 	"github.com/pkg/errors"
 )
 
@@ -51,8 +54,8 @@ func (cfg *Config) New() *Giant {
 	// Todo: settle timeouts
 	// Todo: still need transport as RT??
 
-	var transport http.RoundTripper //nolint:gosimple // Need type RoundTripper!
-	transport = &http.Transport{
+	//var transport http.RoundTripper //nolint:gosimple // Need type RoundTripper!
+	transport := &http.Transport{
 		Dial:                  (&net.Dialer{Timeout: cfg.TimeoutShort}).Dial,
 		ResponseHeaderTimeout: cfg.TimeoutShort,
 		TLSClientConfig:       &tls.Config{InsecureSkipVerify: cfg.SkipVerify},
@@ -67,6 +70,22 @@ func (cfg *Config) New() *Giant {
 		BaseUri: cfg.BaseUri,
 		Headers: cfg.Headers,
 	}
+}
+
+// NewWithTrippers is a convenience method that adds trippers after creating a client.
+func (cfg *Config) NewWithTrippers(user, pass string, lgr Logger) (giant *Giant) {
+
+	giant = cfg.New()
+
+	giant.Use(&statusrt.StatusRt{})
+	giant.Use(&logrt.LogRt{Logger: lgr})
+
+	if user != "" && pass != "" {
+		basicRt := basicrt.New(user, pass)
+		giant.Use(basicRt)
+	}
+
+	return
 }
 
 // Use wraps the current transport with a round tripper

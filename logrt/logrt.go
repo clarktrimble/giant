@@ -2,14 +2,19 @@
 package logrt
 
 import (
+	"context"
 	"net/http"
 	"time"
 
-	"github.com/clarktrimble/giant"
 	"github.com/clarktrimble/hondo"
 )
 
 // Todo: giant.Logger ifc is awkward? prolly dont want/need extra pkg's here?
+type Logger interface {
+	Info(ctx context.Context, msg string, kv ...any)
+	Error(ctx context.Context, msg string, err error, kv ...any)
+	WithFields(ctx context.Context, kv ...any) context.Context
+}
 
 const (
 	idLen int = 7
@@ -23,7 +28,7 @@ var (
 
 // LogRt implements the Tripper interface
 type LogRt struct {
-	Logger giant.Logger
+	Logger Logger
 	next   http.RoundTripper
 }
 
