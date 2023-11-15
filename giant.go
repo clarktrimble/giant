@@ -30,7 +30,7 @@ type Config struct {
 	// TimeoutShort is the dialer and response header timeout
 	TimeoutShort time.Duration `json:"timeout_short" desc:"dialer and header timeout" default:"10s"`
 	// Headers are set when making a request
-	Headers map[string]string
+	Headers map[string]string `json:"headers" desc:"headers to be sent with every request"`
 	// SkipVerify skips verification of ssl certificates (dev only pls!)
 	SkipVerify bool `json:"skip_verify" desc:"skip cert verification"`
 }

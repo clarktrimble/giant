@@ -16,7 +16,9 @@ const (
 )
 
 var (
-	RedactHeaders = map[string]bool{}
+	RedactHeaders = map[string]bool{
+		"Authorization": true,
+	}
 )
 
 // LogRt implements the Tripper interface
