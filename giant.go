@@ -33,9 +33,13 @@ type Config struct {
 	// TimeoutShort is the dialer and response header timeout
 	TimeoutShort time.Duration `json:"timeout_short" desc:"dialer and header timeout" default:"10s"`
 	// Headers are set when making a request
-	Headers map[string]string `json:"headers" desc:"headers to be sent with every request"`
+	Headers map[string]string `json:"headers,omitempty" desc:"headers to be sent with every request"`
 	// SkipVerify skips verification of ssl certificates (dev only pls!)
 	SkipVerify bool `json:"skip_verify" desc:"skip cert verification"`
+	// User is for basic auth in NewWithTrippers.
+	User string `json:"user,omitempty" desc:"username for basic auth"`
+	// Pass is for basic auth in NewWithTrippers.
+	Pass Redact `json:"pass,omitempty" desc:"password for basic auth"`
 }
 
 // Giant represents an http client
@@ -72,16 +76,17 @@ func (cfg *Config) New() *Giant {
 	}
 }
 
-// NewWithTrippers is a convenience method that adds trippers after creating a client.
-func (cfg *Config) NewWithTrippers(user, pass string, lgr Logger) (giant *Giant) {
+// NewWithTrippers is a convenience method that adds StatusRt and Logrt after creating a client.
+// If User and Pass are defined in Config BasicRt is added as well.
+func (cfg *Config) NewWithTrippers(lgr Logger) (giant *Giant) {
 
 	giant = cfg.New()
 
 	giant.Use(&statusrt.StatusRt{})
 	giant.Use(&logrt.LogRt{Logger: lgr})
 
-	if user != "" && pass != "" {
-		basicRt := basicrt.New(user, pass)
+	if cfg.User != "" && cfg.Pass != "" {
+		basicRt := basicrt.New(cfg.User, string(cfg.Pass))
 		giant.Use(basicRt)
 	}
 
