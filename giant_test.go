@@ -141,10 +141,14 @@ var _ = Describe("Giant", func() {
 						"Accept":       "application/json",
 					},
 				}
+				gnt.Headers = map[string]string{
+					"ForThe": "Win",
+				}
 			})
 			It("makes a matching request", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(ts.ContentHeader).To(Equal("application/json"))
+				Expect(ts.FtwHeader).To(Equal("Win"))
 				Expect(ts.Method).To(Equal("POST"))
 				Expect(ts.Path).To(Equal("/posts/"))
 				Expect(ts.Body).To(Equal(`{"data": "about a post"}`))

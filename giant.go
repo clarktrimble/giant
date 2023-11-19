@@ -14,6 +14,9 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/clarktrimble/giant/basicrt"
+	"github.com/clarktrimble/giant/logrt"
+	"github.com/clarktrimble/giant/statusrt"
 	"github.com/pkg/errors"
 )
 
@@ -29,8 +32,14 @@ type Config struct {
 	Timeout time.Duration `json:"timeout" desc:"request timeout" default:"1m"`
 	// TimeoutShort is the dialer and response header timeout
 	TimeoutShort time.Duration `json:"timeout_short" desc:"dialer and header timeout" default:"10s"`
+	// Headers are set when making a request
+	Headers map[string]string `json:"headers,omitempty" desc:"headers to be sent with every request"`
 	// SkipVerify skips verification of ssl certificates (dev only pls!)
 	SkipVerify bool `json:"skip_verify" desc:"skip cert verification"`
+	// User is for basic auth in NewWithTrippers.
+	User string `json:"user,omitempty" desc:"username for basic auth"`
+	// Pass is for basic auth in NewWithTrippers.
+	Pass Redact `json:"pass,omitempty" desc:"password for basic auth"`
 }
 
 // Giant represents an http client
@@ -39,16 +48,16 @@ type Giant struct {
 	Client http.Client
 	// BaseUri is as described in Config
 	BaseUri string
+	// Headers are set when making a request
+	Headers map[string]string
 }
 
 // New constructs a new client from Config
 func (cfg *Config) New() *Giant {
 
 	// Todo: settle timeouts
-	// Todo: still need transport as RT??
 
-	var transport http.RoundTripper //nolint:gosimple // Need type RoundTripper!
-	transport = &http.Transport{
+	transport := &http.Transport{
 		Dial:                  (&net.Dialer{Timeout: cfg.TimeoutShort}).Dial,
 		ResponseHeaderTimeout: cfg.TimeoutShort,
 		TLSClientConfig:       &tls.Config{InsecureSkipVerify: cfg.SkipVerify},
@@ -61,7 +70,25 @@ func (cfg *Config) New() *Giant {
 			Timeout:       cfg.Timeout,
 		},
 		BaseUri: cfg.BaseUri,
+		Headers: cfg.Headers,
 	}
+}
+
+// NewWithTrippers is a convenience method that adds StatusRt and Logrt after creating a client.
+// If User and Pass are defined in Config BasicRt is added as well.
+func (cfg *Config) NewWithTrippers(lgr Logger) (giant *Giant) {
+
+	giant = cfg.New()
+
+	giant.Use(&statusrt.StatusRt{})
+	giant.Use(&logrt.LogRt{Logger: lgr})
+
+	if cfg.User != "" && cfg.Pass != "" {
+		basicRt := basicrt.New(cfg.User, string(cfg.Pass))
+		giant.Use(basicRt)
+	}
+
+	return
 }
 
 // Use wraps the current transport with a round tripper
@@ -76,7 +103,7 @@ type Request struct {
 	// Method is one of the http RFC methods (no net!)
 	Method string
 	// Path is appended to BaseUri when making a request
-	// (leading and trailing slashes recommended here)
+	// (leading and trailing slashes recommended here, convention for sanity!)
 	Path string
 	// Body is read from when making a request
 	Body io.Reader
@@ -87,6 +114,10 @@ type Request struct {
 // Send sends a request
 // leaving read/close of response body to caller
 func (giant *Giant) Send(ctx context.Context, rq Request) (response *http.Response, err error) {
+
+	for key, val := range giant.Headers {
+		rq.Headers[key] = val
+	}
 
 	request, err := rq.httpRequest(ctx, giant.BaseUri)
 	if err != nil {
