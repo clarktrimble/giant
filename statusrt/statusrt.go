@@ -9,6 +9,19 @@ import (
 	"github.com/pkg/errors"
 )
 
+// caveat, from RoundTripper doc:
+
+// RoundTrip should not attempt to interpret the response. In
+// particular, RoundTrip must return err == nil if it obtained
+// a response, regardless of the response's HTTP status code.
+
+// which is exactly what's being done here!!
+// "seems" to work ok .. too bad it doesn't say why
+// the idea is to get an error which can be logged on non-200 and give up quick
+// when we know non-200 is bust
+//
+// Todo: think about a higher level approach that doesn't flagrantly ignore doc
+
 const (
 	minStatus int = 200
 	maxStatus int = 300
@@ -25,11 +38,12 @@ func (rt *StatusRt) Wrap(next http.RoundTripper) {
 }
 
 // RoundTrip returns an error if the status code is bad.
-func (rt *StatusRt) RoundTrip(request *http.Request) (response *http.Response, err error) {
+func (rt *StatusRt) RoundTrip(request *http.Request) (*http.Response, error) {
 
-	response, err = rt.next.RoundTrip(request)
+	response, err := rt.next.RoundTrip(request)
 	if err != nil {
-		return
+		response.Body.Close()
+		return nil, err
 	}
 
 	if !validStatusCode(response.StatusCode) {
@@ -39,9 +53,10 @@ func (rt *StatusRt) RoundTrip(request *http.Request) (response *http.Response, e
 		} else {
 			err = errors.Errorf("unexpected status code %d with body: %s", response.StatusCode, body)
 		}
-		// Todo: response = nil
+		response.Body.Close()
+		return nil, err
 	}
-	return
+	return response, nil
 }
 
 //

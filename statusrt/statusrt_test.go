@@ -68,6 +68,7 @@ var _ = Describe("StatusRt", func() {
 				It("returns an error", func() {
 
 					Expect(err).To(HaveOccurred())
+					Expect(response).To(BeNil())
 				})
 			})
 		})
