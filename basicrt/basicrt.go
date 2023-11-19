@@ -13,6 +13,7 @@ type BasicRt struct {
 	auth string
 }
 
+// New creates a BasicRt with encoded auth.
 func New(username, password string) *BasicRt {
 
 	userpass := fmt.Sprintf("%s:%s", username, password)

@@ -1,37 +1,40 @@
 package basicrt_test
 
-//. "github.com/onsi/ginkgo/v2"
-//. "github.com/onsi/gomega"
+import (
+	"net/http"
+	"testing"
 
-// . "github.com/clarktrimble/giant/statusrt"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-/*
-func TestStatusRt(t *testing.T) {
+	. "github.com/clarktrimble/giant/basicrt"
+	"github.com/clarktrimble/giant/mock"
+)
+
+func TestBasicRt(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "StatusRt Suite")
+	RunSpecs(t, "BasicRt Suite")
 }
 
-var _ = Describe("StatusRt", func() {
+var _ = Describe("BasicRt", func() {
 
 	Describe("tripperware", func() {
 
 		var (
-			rt       *StatusRt
-			request  *http.Request
-			response *http.Response
-
-			err error
+			rt      *BasicRt
+			request *http.Request
+			err     error
 		)
 
 		JustBeforeEach(func() {
-			response, err = rt.RoundTrip(request)
+			_, err = rt.RoundTrip(request)
 		})
 
-		Describe("detecting non-200 statuses", func() {
+		Describe("adding basic auth header", func() {
 
-			When("status is in the 200's", func() {
+			When("all is well", func() {
 				BeforeEach(func() {
-					rt = &StatusRt{}
+					rt = New("top", "secret")
 					rt.Wrap(&mock.TestRt{
 						Status: 201,
 					})
@@ -39,34 +42,13 @@ var _ = Describe("StatusRt", func() {
 					request, err = http.NewRequest("PUT", "https://boxworld.org/cardboard", nil)
 					Expect(err).ToNot(HaveOccurred())
 				})
-				It("passes thru the response", func() {
 
+				It("sets the header", func() {
 					Expect(err).ToNot(HaveOccurred())
-
-					body, err := io.ReadAll(response.Body)
-					Expect(err).ToNot(HaveOccurred())
-					Expect(string(body)).To(Equal(`{"ima": "pc"}`))
-				})
-			})
-
-			When("status is _not_ in the 200's", func() {
-				BeforeEach(func() {
-					rt = &StatusRt{}
-					rt.Wrap(&mock.TestRt{
-						Status: 404,
-					})
-
-					request, err = http.NewRequest("PUT", "https://boxworld.org/cardboard", nil)
-					Expect(err).ToNot(HaveOccurred())
-				})
-				It("returns an error", func() {
-
-					Expect(err).To(HaveOccurred())
+					Expect(request.Header["Authorization"]).To(Equal([]string{"Basic dG9wOnNlY3JldA=="}))
 				})
 			})
 		})
 
 	})
-
 })
-*/
