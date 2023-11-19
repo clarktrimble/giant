@@ -56,9 +56,7 @@ type Giant struct {
 func (cfg *Config) New() *Giant {
 
 	// Todo: settle timeouts
-	// Todo: still need transport as RT??
 
-	//var transport http.RoundTripper //nolint:gosimple // Need type RoundTripper!
 	transport := &http.Transport{
 		Dial:                  (&net.Dialer{Timeout: cfg.TimeoutShort}).Dial,
 		ResponseHeaderTimeout: cfg.TimeoutShort,
@@ -105,21 +103,18 @@ type Request struct {
 	// Method is one of the http RFC methods (no net!)
 	Method string
 	// Path is appended to BaseUri when making a request
-	// (leading and trailing slashes recommended here)
+	// (leading and trailing slashes recommended here, convention for sanity!)
 	Path string
 	// Body is read from when making a request
 	Body io.Reader
 	// Headers are set when making a request
 	Headers map[string]string
-	// Todo: want ^^^ stringer for headers??
-	// Todo: post about updating a module, via branchy
 }
 
 // Send sends a request
 // leaving read/close of response body to caller
 func (giant *Giant) Send(ctx context.Context, rq Request) (response *http.Response, err error) {
 
-	// Todo: unit!!
 	for key, val := range giant.Headers {
 		rq.Headers[key] = val
 	}

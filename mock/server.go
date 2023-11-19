@@ -10,11 +10,11 @@ import (
 type Server struct {
 	Server        *httptest.Server
 	ContentHeader string
+	FtwHeader     string
 	//AuthHeader    string
 	Method string
 	Path   string
 	Body   string
-	// Toda: are these all in use??
 }
 
 // func newTestServer(t *testing.T, responseBody string) (ts *Server) {
@@ -24,11 +24,14 @@ func NewServer(responseBody string) (ts *Server) {
 
 	ts.Server = httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 
-		body, _ := io.ReadAll(request.Body)
-		//assert.NoError(t, err)
-		// Todo: detect error??
+		body, err := io.ReadAll(request.Body)
+		if err != nil {
+			panic(err)
+			// maybe pass in testy's for more graceful?
+		}
 
 		ts.ContentHeader = request.Header.Get("Content-Type")
+		ts.FtwHeader = request.Header.Get("ForThe")
 		//ts.AuthHeader = request.Header.Get("Authorization")
 		ts.Method = request.Method
 		ts.Path = request.RequestURI

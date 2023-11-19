@@ -53,9 +53,10 @@ var _ = Describe("LogRt", func() {
 					request, err = http.NewRequest("PUT", "https://boxworld.org/cardboard", nil)
 					Expect(err).ToNot(HaveOccurred())
 
-					RedactHeaders = map[string]bool{"X-Authorization-Token": true}
+					RedactHeaders["X-Authorization-Token"] = true
 					request.Header.Set("content-type", "application/json")
 					request.Header.Set("X-Authorization-Token", "this-is-secret")
+					request.Header.Set("Authorization", "this-is-also-secret")
 				})
 
 				It("logs the request and the response", func() {
@@ -68,6 +69,7 @@ var _ = Describe("LogRt", func() {
 						"headers": http.Header{
 							"Content-Type":          []string{"application/json"},
 							"X-Authorization-Token": []string{"--redacted--"},
+							"Authorization":         []string{"--redacted--"},
 						},
 						"host":       "boxworld.org",
 						"method":     "PUT",

@@ -12,3 +12,5 @@ func (redact Redact) MarshalJSON() ([]byte, error) {
 
 	return []byte(`"--redacted--"`), nil
 }
+
+// Todo: want stringer? sync w launch :/ or micro-mod ? (prolly underkill, lol)

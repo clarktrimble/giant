@@ -1,7 +1,7 @@
 
 # Giant
 
-JSON API client for your Golang
+JSON API client for Golang
 
 ![giant-bw](https://github.com/clarktrimble/giant/assets/5055161/b8cdd603-1d7f-47f4-957f-994aa1648050)
 
@@ -10,11 +10,15 @@ JSON API client for your Golang
 Why not just use the stdlib client?
 
  - set client timeouts
- - interpret non-200's statuses as error (tripper)
- - reuse marshal/unmarshal logics
  - set headers
- - log request/response (tripper)
+ - reuse marshal/unmarshal logics for json api's
  - redact selected headers from logging
+
+And from a few optional RoundTrippers:
+
+ - log request/response (big'n!)
+ - interpret non-200's statuses as error (see caveat)
+ - basic auth
 
 ## Usage
 
@@ -48,6 +52,8 @@ and then inject from above:
 
     weatherSvc := &svc.Svc{Client: client}
     hourly, err := weatherSvc.GetHourly(ctx, lat, lon)
+
+have a look at the example for full schnitzel.
 
 ## License
 
