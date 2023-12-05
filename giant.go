@@ -33,7 +33,7 @@ type Config struct {
 	// TimeoutShort is the dialer and response header timeout
 	TimeoutShort time.Duration `json:"timeout_short" desc:"dialer and header timeout" default:"10s"`
 	// Headers are set when making a request
-	Headers map[string]string `json:"headers,omitempty" desc:"headers to be sent with every request"`
+	Headers []string `json:"headers,omitempty" desc:"header pairs to be sent with every request"`
 	// SkipVerify skips verification of ssl certificates (dev only pls!)
 	SkipVerify bool `json:"skip_verify" desc:"skip cert verification"`
 	// User is for basic auth in NewWithTrippers.
@@ -42,7 +42,7 @@ type Config struct {
 	Pass Redact `json:"pass,omitempty" desc:"password for basic auth"`
 	// RedactHeaders are headers to be redacted from logging in NewWithTrippers.
 	RedactHeaders []string `json:"redact_headers" desc:"headers to redact from request logging"`
-	// SkipBody when true request and response bodies are not logged.
+	// SkipBody when true request and response bodies are not logged in NewWithTrippers..
 	SkipBody bool `json:"skip_body" desc:"skip logging of body for request and response"`
 }
 
@@ -59,12 +59,21 @@ type Giant struct {
 // New constructs a new client from Config
 func (cfg *Config) New() *Giant {
 
-	// Todo: settle timeouts
-
 	transport := &http.Transport{
 		Dial:                  (&net.Dialer{Timeout: cfg.TimeoutShort}).Dial,
 		ResponseHeaderTimeout: cfg.TimeoutShort,
 		TLSClientConfig:       &tls.Config{InsecureSkipVerify: cfg.SkipVerify},
+	}
+
+	// copy header cfg pairs into map ignoring odd count
+
+	hdrs := map[string]string{}
+	hdrsLen := len(cfg.Headers)
+	if hdrsLen%2 != 0 {
+		hdrsLen--
+	}
+	for i := 0; i < hdrsLen; i += 2 {
+		hdrs[cfg.Headers[i]] = cfg.Headers[i+1]
 	}
 
 	return &Giant{
@@ -74,7 +83,7 @@ func (cfg *Config) New() *Giant {
 			Timeout:       cfg.Timeout,
 		},
 		BaseUri: cfg.BaseUri,
-		Headers: cfg.Headers,
+		Headers: hdrs,
 	}
 }
 

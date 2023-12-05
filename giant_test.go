@@ -20,8 +20,6 @@ func TestGiant(t *testing.T) {
 	RunSpecs(t, "Giant Suite")
 }
 
-// Todo: think about using test suite to test interfacys???
-
 var _ = Describe("Giant", func() {
 
 	Describe("creating a client with trippers", func() {
@@ -39,16 +37,18 @@ var _ = Describe("Giant", func() {
 			BeforeEach(func() {
 				cfg = &Config{
 					BaseUri:       "https://api.open-meteo.com",
-					RedactHeaders: []string{"demomomo"},
+					Headers:       []string{"X-Authorization-Token", "this-is-secret", "bargle"},
+					RedactHeaders: []string{"X-Authorization-Token"},
 				}
 				lgr = mock.NewLogger()
 			})
 
 			It("creates a client with LogRt as first transport", func() {
 				Expect(gnt.BaseUri).To(Equal("https://api.open-meteo.com"))
+				Expect(gnt.Headers).To(Equal(map[string]string{"X-Authorization-Token": "this-is-secret"}))
 
 				logRt := gnt.Client.Transport.(*logrt.LogRt)
-				Expect(logRt.RedactHeaders).To(Equal(map[string]bool{"Authorization": true, "demomomo": true}))
+				Expect(logRt.RedactHeaders).To(Equal(map[string]bool{"Authorization": true, "X-Authorization-Token": true}))
 				// Todo: think of making next public so we can dig thru tripper stack
 			})
 		})
