@@ -34,9 +34,7 @@ var _ = Describe("LogRt", func() {
 
 		BeforeEach(func() {
 			lgr = mock.NewLogger()
-			rt = &LogRt{
-				Logger: lgr,
-			}
+			rt = New(lgr, []string{"X-Authorization-Token"}, false)
 			rt.Wrap(&mock.TestRt{
 				Status: 200,
 			})
@@ -46,7 +44,6 @@ var _ = Describe("LogRt", func() {
 			request, err = http.NewRequest("PUT", "https://boxworld.org/cardboard", nil)
 			Expect(err).ToNot(HaveOccurred())
 
-			RedactHeaders["X-Authorization-Token"] = true
 			request.Header.Set("content-type", "application/json")
 			request.Header.Set("X-Authorization-Token", "this-is-secret")
 			request.Header.Set("Authorization", "this-is-also-secret")
@@ -59,10 +56,6 @@ var _ = Describe("LogRt", func() {
 		Describe("logging request and response", func() {
 
 			When("all is well", func() {
-				BeforeEach(func() {
-					SkipBody = false
-				})
-
 				It("logs the request and the response", func() {
 
 					Expect(err).ToNot(HaveOccurred())
@@ -105,7 +98,7 @@ var _ = Describe("LogRt", func() {
 
 			When("skipping body", func() {
 				BeforeEach(func() {
-					SkipBody = true
+					rt.SkipBody = true
 				})
 
 				It("logs the request and the response sans body", func() {
@@ -150,5 +143,4 @@ var _ = Describe("LogRt", func() {
 		})
 
 	})
-
 })

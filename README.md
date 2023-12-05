@@ -11,12 +11,14 @@ Why not just use the stdlib client?
 
  - set client timeouts
  - set headers
- - reuse marshal/unmarshal logics for json api's
- - redact selected headers from logging
+ - close body
+ - reuse marshal/unmarshal logics
 
 And from a few optional RoundTrippers:
 
  - log request/response (big'n!)
+   - redact selected headers
+   - optionally skip body
  - interpret non-200's statuses as error (see caveat)
  - basic auth
 

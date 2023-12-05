@@ -40,6 +40,10 @@ type Config struct {
 	User string `json:"user,omitempty" desc:"username for basic auth"`
 	// Pass is for basic auth in NewWithTrippers.
 	Pass Redact `json:"pass,omitempty" desc:"password for basic auth"`
+	// RedactHeaders are headers to be redacted from logging in NewWithTrippers.
+	RedactHeaders []string `json:"redact_headers" desc:"headers to redact from request logging"`
+	// SkipBody when true request and response bodies are not logged.
+	SkipBody bool `json:"skip_body" desc:"skip logging of body for request and response"`
 }
 
 // Giant represents an http client
@@ -81,7 +85,7 @@ func (cfg *Config) NewWithTrippers(lgr Logger) (giant *Giant) {
 	giant = cfg.New()
 
 	giant.Use(&statusrt.StatusRt{})
-	giant.Use(&logrt.LogRt{Logger: lgr})
+	giant.Use(logrt.New(lgr, cfg.RedactHeaders, cfg.SkipBody))
 
 	if cfg.User != "" && cfg.Pass != "" {
 		basicRt := basicrt.New(cfg.User, string(cfg.Pass))

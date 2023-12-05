@@ -6,8 +6,6 @@ import (
 	"os"
 
 	"github.com/clarktrimble/giant"
-	"github.com/clarktrimble/giant/logrt"
-	"github.com/clarktrimble/giant/statusrt"
 
 	"github.com/clarktrimble/giant/examples/weather/minlog"
 	"github.com/clarktrimble/giant/examples/weather/svc"
@@ -31,14 +29,12 @@ func main() {
 		},
 	}
 
-	ctx := context.Background()
 	lgr := &minlog.MinLog{}
+	client := cfg.Client.NewWithTrippers(lgr)
 
-	client := cfg.Client.New()
-	client.Use(&statusrt.StatusRt{})
-	client.Use(&logrt.LogRt{Logger: lgr})
-
+	ctx := context.Background()
 	weatherSvc := &svc.Svc{Client: client}
+
 	hourly, err := weatherSvc.GetHourly(ctx, lat, lon)
 	if err != nil {
 		lgr.Error(ctx, "failed to get forcast data", err)

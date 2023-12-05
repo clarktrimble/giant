@@ -13,27 +13,41 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Todo: giant.Logger ifc is awkward? prolly dont want/need extra pkg's here?
+const (
+	idLen int = 7
+)
+
+// Logger specifies a logger.
 type Logger interface {
 	Info(ctx context.Context, msg string, kv ...any)
 	Error(ctx context.Context, msg string, err error, kv ...any)
 	WithFields(ctx context.Context, kv ...any) context.Context
 }
 
-const (
-	idLen int = 7
-)
-
-var (
-	RedactHeaders = map[string]bool{
-		"Authorization": true,
-	}
-)
-
-// LogRt implements the Tripper interface
+// LogRt implements the Tripper interface logging requests and responses.
 type LogRt struct {
-	Logger Logger
-	next   http.RoundTripper
+	RedactHeaders map[string]bool
+	SkipBody      bool
+	Logger        Logger
+	next          http.RoundTripper
+}
+
+// New creates a LogRt.
+func New(lgr Logger, redactHeaders []string, skipBody bool) (logRt *LogRt) {
+
+	logRt = &LogRt{
+		RedactHeaders: map[string]bool{},
+		SkipBody:      skipBody,
+		Logger:        lgr,
+	}
+
+	// always redact for basic auth
+
+	for _, key := range append(redactHeaders, "Authorization") {
+		logRt.RedactHeaders[key] = true
+	}
+
+	return
 }
 
 // Wrap sets the next round tripper, thereby wrapping it
@@ -52,34 +66,32 @@ func (rt *LogRt) RoundTrip(request *http.Request) (response *http.Response, err 
 
 	// Todo: passthru
 
-	rt.Logger.Info(ctx, "sending request", requestFields(request)...)
+	rt.Logger.Info(ctx, "sending request", rt.requestFields(request)...)
 
 	response, err = rt.next.RoundTrip(request)
 	if err != nil {
 		return
 	}
 
-	rt.Logger.Info(ctx, "received response", responseFields(response, request.URL.Path, start)...)
+	rt.Logger.Info(ctx, "received response", rt.responseFields(response, request.URL.Path, start)...)
 
 	return
 }
 
-var SkipBody bool
-
 // unexported
 
-func requestFields(request *http.Request) (fields []any) {
+func (rt *LogRt) requestFields(request *http.Request) (fields []any) {
 
 	fields = []any{
 		"method", request.Method,
 		"scheme", request.URL.Scheme,
 		"host", request.URL.Host,
 		"path", request.URL.Path,
-		"headers", redact(request.Header),
+		"headers", rt.redact(request.Header),
 		"query", request.URL.Query(),
 	}
 
-	if !SkipBody {
+	if !rt.SkipBody {
 
 		// read body and put it back
 
@@ -96,7 +108,7 @@ func requestFields(request *http.Request) (fields []any) {
 	return
 }
 
-func responseFields(response *http.Response, path string, start time.Time) (fields []any) {
+func (rt *LogRt) responseFields(response *http.Response, path string, start time.Time) (fields []any) {
 
 	fields = []any{
 		"status", response.StatusCode,
@@ -105,7 +117,7 @@ func responseFields(response *http.Response, path string, start time.Time) (fiel
 		"elapsed", time.Since(start),
 	}
 
-	if !SkipBody {
+	if !rt.SkipBody {
 
 		// read body and put it back
 
@@ -143,13 +155,13 @@ func read(reader io.Reader) (data []byte, err error) {
 	return
 }
 
-func redact(header http.Header) (redacted http.Header) {
+func (rt *LogRt) redact(header http.Header) (redacted http.Header) {
 
 	redacted = header.Clone()
 	for key := range header {
 
 		redacted[key] = header[key]
-		if RedactHeaders[key] {
+		if rt.RedactHeaders[key] {
 			redacted[key] = []string{"--redacted--"}
 		}
 	}
