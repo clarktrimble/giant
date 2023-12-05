@@ -2,11 +2,15 @@
 package logrt
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"io"
 	"net/http"
 	"time"
 
 	"github.com/clarktrimble/hondo"
+	"github.com/pkg/errors"
 )
 
 // Todo: giant.Logger ifc is awkward? prolly dont want/need extra pkg's here?
@@ -46,45 +50,98 @@ func (rt *LogRt) RoundTrip(request *http.Request) (response *http.Response, err 
 	ctx = rt.Logger.WithFields(ctx, "request_id", hondo.Rand(idLen))
 	request = request.WithContext(ctx)
 
-	reqBody, err := requestBody(request)
-	if err != nil {
-		rt.Logger.Error(ctx, "roundtrip logger failed to get request body", err)
-	}
-
 	// Todo: passthru
 
-	rt.Logger.Info(ctx, "sending request",
-		"method", request.Method,
-		"scheme", request.URL.Scheme,
-		"host", request.URL.Host,
-		"path", request.URL.Path,
-		"headers", redact(request.Header),
-		"query", request.URL.Query(),
-		"body", string(reqBody),
-	)
+	rt.Logger.Info(ctx, "sending request", requestFields(request)...)
 
 	response, err = rt.next.RoundTrip(request)
 	if err != nil {
 		return
 	}
 
-	resBody, err := responseBody(response)
-	if err != nil {
-		rt.Logger.Error(ctx, "roundtrip logger failed to get response body", err)
-	}
-
-	rt.Logger.Info(ctx, "received response",
-		"status", response.StatusCode,
-		"path", request.URL.Path,
-		"headers", response.Header,
-		"body", string(resBody),
-		"elapsed", time.Since(start),
-	)
+	rt.Logger.Info(ctx, "received response", responseFields(response, request.URL.Path, start)...)
 
 	return
 }
 
+var SkipBody bool
+
 // unexported
+
+func requestFields(request *http.Request) (fields []any) {
+
+	fields = []any{
+		"method", request.Method,
+		"scheme", request.URL.Scheme,
+		"host", request.URL.Host,
+		"path", request.URL.Path,
+		"headers", redact(request.Header),
+		"query", request.URL.Query(),
+	}
+
+	if !SkipBody {
+
+		// read body and put it back
+
+		body, err := read(request.Body)
+		if err != nil {
+			body = []byte(fmt.Sprintf("error: %s", err))
+		}
+		request.Body = io.NopCloser(bytes.NewBuffer(body))
+
+		fields = append(fields, "body")
+		fields = append(fields, string(body))
+	}
+
+	return
+}
+
+func responseFields(response *http.Response, path string, start time.Time) (fields []any) {
+
+	fields = []any{
+		"status", response.StatusCode,
+		"path", path,
+		"headers", response.Header,
+		"elapsed", time.Since(start),
+	}
+
+	if !SkipBody {
+
+		// read body and put it back
+
+		body, err := read(response.Body)
+		if err != nil {
+			body = []byte(fmt.Sprintf("error: %s", err))
+		}
+		response.Body = io.NopCloser(bytes.NewBuffer(body))
+
+		fields = append(fields, "body")
+		fields = append(fields, string(body))
+	}
+
+	return
+}
+
+// read reads ;|
+// returning nil if nothing read
+
+func read(reader io.Reader) (data []byte, err error) {
+
+	if reader == nil {
+		return
+	}
+
+	data, err = io.ReadAll(reader)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to read from: %#v", reader)
+		return
+	}
+	if len(data) == 0 {
+		data = nil
+	}
+
+	return
+}
 
 func redact(header http.Header) (redacted http.Header) {
 
