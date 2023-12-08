@@ -41,7 +41,7 @@ type Config struct {
 	// Pass is for basic auth in NewWithTrippers.
 	Pass Redact `json:"pass,omitempty" desc:"password for basic auth"`
 	// RedactHeaders are headers to be redacted from logging in NewWithTrippers.
-	RedactHeaders []string `json:"redact_headers" desc:"headers to redact from request logging"`
+	RedactHeaders []string `json:"redact_headers,omitempty" desc:"headers to redact from request logging"`
 	// SkipBody when true request and response bodies are not logged in NewWithTrippers..
 	SkipBody bool `json:"skip_body" desc:"skip logging of body for request and response"`
 }
@@ -63,6 +63,10 @@ func (cfg *Config) New() *Giant {
 		Dial:                  (&net.Dialer{Timeout: cfg.TimeoutShort}).Dial,
 		ResponseHeaderTimeout: cfg.TimeoutShort,
 		TLSClientConfig:       &tls.Config{InsecureSkipVerify: cfg.SkipVerify},
+
+		// Todo: RHT short breaks long polling??
+		// yeah, use "Timeout", so omit?
+		// short for: dial, http.Transport.TLSHandshakeTimeout
 	}
 
 	// copy header cfg pairs into map ignoring odd count
@@ -128,6 +132,8 @@ type Request struct {
 // leaving read/close of response body to caller
 func (giant *Giant) Send(ctx context.Context, rq Request) (response *http.Response, err error) {
 
+	// Todo: bah... cannot use as interface with "rq" argh
+
 	for key, val := range giant.Headers {
 		rq.Headers[key] = val
 	}
@@ -163,6 +169,7 @@ func (giant *Giant) SendJson(ctx context.Context, method, path string, body io.R
 
 	data, err = io.ReadAll(response.Body)
 	return
+	// Todo: response headers could be of interest
 }
 
 // SendObject marshalls the object to be sent, unmarshalls the response body, and calls SendJson
