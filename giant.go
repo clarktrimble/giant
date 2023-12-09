@@ -60,13 +60,9 @@ type Giant struct {
 func (cfg *Config) New() *Giant {
 
 	transport := &http.Transport{
-		Dial:                  (&net.Dialer{Timeout: cfg.TimeoutShort}).Dial,
-		ResponseHeaderTimeout: cfg.TimeoutShort,
-		TLSClientConfig:       &tls.Config{InsecureSkipVerify: cfg.SkipVerify},
-
-		// Todo: RHT short breaks long polling??
-		// yeah, use "Timeout", so omit?
-		// short for: dial, http.Transport.TLSHandshakeTimeout
+		Dial:                (&net.Dialer{Timeout: cfg.TimeoutShort}).Dial,
+		TLSHandshakeTimeout: cfg.TimeoutShort,
+		TLSClientConfig:     &tls.Config{InsecureSkipVerify: cfg.SkipVerify},
 	}
 
 	// copy header cfg pairs into map ignoring odd count
@@ -132,7 +128,7 @@ type Request struct {
 // leaving read/close of response body to caller
 func (giant *Giant) Send(ctx context.Context, rq Request) (response *http.Response, err error) {
 
-	// Todo: bah... cannot use as interface with "rq" argh
+	// Todo: Request arg will pull in giang dep; just privatize?
 
 	for key, val := range giant.Headers {
 		rq.Headers[key] = val

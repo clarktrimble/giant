@@ -73,7 +73,6 @@ func (rt *LogRt) RoundTrip(request *http.Request) (response *http.Response, err 
 		return
 	}
 
-	//rt.Logger.Info(ctx, "received response", rt.responseFields(response, request.URL.Path, start)...)
 	rt.Logger.Info(ctx, "received response", rt.responseFields(response, start)...)
 
 	return
@@ -114,9 +113,6 @@ func (rt *LogRt) responseFields(response *http.Response, start time.Time) (field
 
 	fields = []any{
 		"status", response.StatusCode,
-		//"path", path,
-		//"path", response.Request.URL.Path,
-		// Todo: scratch head about nil request ..  generally??
 		"headers", response.Header,
 		"elapsed", time.Since(start),
 	}
