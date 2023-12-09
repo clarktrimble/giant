@@ -73,7 +73,7 @@ func (rt *LogRt) RoundTrip(request *http.Request) (response *http.Response, err 
 		return
 	}
 
-	rt.Logger.Info(ctx, "received response", rt.responseFields(response, request.URL.Path, start)...)
+	rt.Logger.Info(ctx, "received response", rt.responseFields(response, start)...)
 
 	return
 }
@@ -108,13 +108,18 @@ func (rt *LogRt) requestFields(request *http.Request) (fields []any) {
 	return
 }
 
-func (rt *LogRt) responseFields(response *http.Response, path string, start time.Time) (fields []any) {
+// func (rt *LogRt) responseFields(response *http.Response, path string, start time.Time) (fields []any) {
+func (rt *LogRt) responseFields(response *http.Response, start time.Time) (fields []any) {
 
 	fields = []any{
 		"status", response.StatusCode,
-		"path", path,
 		"headers", response.Header,
 		"elapsed", time.Since(start),
+	}
+
+	if response.Request != nil && response.Request.URL != nil {
+		fields = append(fields, "path")
+		fields = append(fields, response.Request.URL.Path)
 	}
 
 	if !rt.SkipBody {

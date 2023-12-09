@@ -42,7 +42,6 @@ func (rt *StatusRt) RoundTrip(request *http.Request) (*http.Response, error) {
 
 	response, err := rt.next.RoundTrip(request)
 	if err != nil {
-		response.Body.Close()
 		return nil, err
 	}
 
