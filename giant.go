@@ -20,8 +20,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Todo: query params
-
 // Config represents giant config
 type Config struct {
 	// BaseUri is the scheme, domain, optionally port and/or path
@@ -128,8 +126,6 @@ type Request struct {
 // leaving read/close of response body to caller
 func (giant *Giant) Send(ctx context.Context, rq Request) (response *http.Response, err error) {
 
-	// Todo: Request arg will pull in giang dep; just privatize?
-
 	for key, val := range giant.Headers {
 		rq.Headers[key] = val
 	}
@@ -165,7 +161,6 @@ func (giant *Giant) SendJson(ctx context.Context, method, path string, body io.R
 
 	data, err = io.ReadAll(response.Body)
 	return
-	// Todo: response headers could be of interest
 }
 
 // SendObject marshalls the object to be sent, unmarshalls the response body, and calls SendJson
