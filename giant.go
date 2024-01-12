@@ -176,8 +176,10 @@ func (giant *Giant) SendObject(ctx context.Context, method, path string, sndObj,
 		return
 	}
 
-	err = json.Unmarshal(rcvData, &rcvObj)
-	err = errors.Wrapf(err, "failed to decode response into %#v", rcvObj)
+	if rcvObj != nil {
+		err = json.Unmarshal(rcvData, &rcvObj)
+		err = errors.Wrapf(err, "failed to decode response into %#v", rcvObj)
+	}
 	return
 }
 
