@@ -77,20 +77,24 @@ var _ = Describe("Giant", func() {
 		Describe("sending object", func() {
 			var (
 				sndObj foo
-				rcvObj foo
+				rcvObj *foo
 			)
 
-			JustBeforeEach(func() {
-				err = gnt.SendObject(ctx, method, path, sndObj, &rcvObj)
+			BeforeEach(func() {
+				method = "PUT"
+				path = "/posts/"
+				sndObj = foo{Data: "stuff"}
 			})
 
-			When("all is well", func() {
+			JustBeforeEach(func() {
+				err = gnt.SendObject(ctx, method, path, sndObj, rcvObj)
+			})
+
+			When("both send and receive are specified", func() {
 				BeforeEach(func() {
-					method = "PUT"
-					path = "/posts/"
-					sndObj = foo{Data: "stuff"}
-					rcvObj = foo{}
+					rcvObj = &foo{}
 				})
+
 				It("marshalls send and unmarshalls receive", func() {
 					Expect(err).ToNot(HaveOccurred())
 
@@ -99,7 +103,17 @@ var _ = Describe("Giant", func() {
 					Expect(ts.Path).To(Equal("/posts/"))
 					Expect(ts.Body).To(Equal(`{"data":"stuff"}`))
 
-					Expect(rcvObj).To(Equal(foo{Data: "thing2"}))
+					Expect(rcvObj).To(Equal(&foo{Data: "thing2"}))
+				})
+			})
+
+			When("rcvObj is nil", func() {
+				BeforeEach(func() {
+					rcvObj = nil
+				})
+				It("skips unmarshalling receive", func() {
+					Expect(err).ToNot(HaveOccurred())
+					Expect(rcvObj).To(BeNil())
 				})
 			})
 		})
