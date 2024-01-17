@@ -37,7 +37,7 @@ func (ml *Logger) WithFields(ctx context.Context, kv ...any) context.Context {
 
 // unexported
 
-func (ml *Logger) log(ctx context.Context, msg string, kv []any) {
+func (ml *Logger) log(ctx context.Context, msg string, kv []any) { //nolint: unparam
 
 	line := strKey(kv)
 
@@ -55,7 +55,7 @@ func strKey(pairs []any) (keyval map[string]any) {
 	keyval = map[string]any{}
 
 	for i := 0; i < len(pairs)-1; i = i + 2 {
-		key := pairs[i].(string)
+		key := pairs[i].(string) //nolint: forcetypeassert
 		val := pairs[i+1]
 
 		keyval[key] = val

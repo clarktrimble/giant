@@ -64,8 +64,6 @@ func (rt *LogRt) RoundTrip(request *http.Request) (response *http.Response, err 
 	ctx = rt.Logger.WithFields(ctx, "request_id", hondo.Rand(idLen))
 	request = request.WithContext(ctx)
 
-	// Todo: passthru
-
 	rt.Logger.Info(ctx, "sending request", rt.requestFields(request)...)
 
 	response, err = rt.next.RoundTrip(request)

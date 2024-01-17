@@ -1,5 +1,5 @@
 // Package statusrt implements the Tripper interface
-// returning an error if the reponse status code is not in the 200's
+// returning an error if the response status code is not in the 200's
 package statusrt
 
 import (
@@ -19,8 +19,6 @@ import (
 // "seems" to work ok .. too bad it doesn't say why
 // the idea is to get an error which can be logged on non-200 and give up quick
 // when we know non-200 is bust
-//
-// Todo: think about a higher level approach that doesn't flagrantly ignore doc
 
 const (
 	minStatus int = 200

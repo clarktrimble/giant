@@ -60,7 +60,7 @@ func (cfg *Config) New() *Giant {
 	transport := &http.Transport{
 		Dial:                (&net.Dialer{Timeout: cfg.TimeoutShort}).Dial,
 		TLSHandshakeTimeout: cfg.TimeoutShort,
-		TLSClientConfig:     &tls.Config{InsecureSkipVerify: cfg.SkipVerify},
+		TLSClientConfig:     &tls.Config{InsecureSkipVerify: cfg.SkipVerify}, //nolint: gosec
 	}
 
 	// copy header cfg pairs into map ignoring odd count
@@ -140,7 +140,7 @@ func (giant *Giant) Send(ctx context.Context, rq Request) (response *http.Respon
 	return
 }
 
-// SendJson constructs a request, sends and recieves json closing the response body
+// SendJson constructs a request, sends and receives json closing the response body
 func (giant *Giant) SendJson(ctx context.Context, method, path string, body io.Reader) (data []byte, err error) {
 
 	rq := Request{

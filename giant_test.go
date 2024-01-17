@@ -47,9 +47,9 @@ var _ = Describe("Giant", func() {
 				Expect(gnt.BaseUri).To(Equal("https://api.open-meteo.com"))
 				Expect(gnt.Headers).To(Equal(map[string]string{"X-Authorization-Token": "this-is-secret"}))
 
-				logRt := gnt.Client.Transport.(*logrt.LogRt)
+				logRt, ok := gnt.Client.Transport.(*logrt.LogRt)
+				Expect(ok).To(BeTrue())
 				Expect(logRt.RedactHeaders).To(Equal(map[string]bool{"Authorization": true, "X-Authorization-Token": true}))
-				// Todo: think of making next public so we can dig thru tripper stack
 			})
 		})
 	})
