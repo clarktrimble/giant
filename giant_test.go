@@ -1,19 +1,21 @@
-package giant_test
+package giant
 
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	. "github.com/clarktrimble/giant"
 	"github.com/clarktrimble/giant/logrt"
-	"github.com/clarktrimble/giant/mock"
 )
+
+//go:generate moq -out mock_test.go . logger
 
 func TestGiant(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -25,7 +27,7 @@ var _ = Describe("Giant", func() {
 	Describe("creating a client with trippers", func() {
 		var (
 			cfg *Config
-			lgr Logger
+			lgr *loggerMock
 			gnt *Giant
 		)
 
@@ -40,7 +42,8 @@ var _ = Describe("Giant", func() {
 					Headers:       []string{"X-Authorization-Token", "this-is-secret", "bargle"},
 					RedactHeaders: []string{"X-Authorization-Token"},
 				}
-				lgr = mock.NewLogger()
+
+				lgr = &loggerMock{}
 			})
 
 			It("creates a client with LogRt as first transport", func() {
@@ -56,7 +59,7 @@ var _ = Describe("Giant", func() {
 
 	Describe("making requests", func() {
 		var (
-			ts  *mock.Server
+			ts  *testServer
 			gnt *Giant
 			ctx context.Context
 			err error
@@ -66,7 +69,7 @@ var _ = Describe("Giant", func() {
 		)
 
 		BeforeEach(func() {
-			ts = mock.NewServer(`{"data": "thing2"}`)
+			ts = newTestServer(`{"data": "thing2"}`)
 			gnt = &Giant{
 				Client:  http.Client{},
 				BaseUri: ts.Server.URL,
@@ -210,4 +213,34 @@ var _ = Describe("Giant", func() {
 
 type foo struct {
 	Data string `json:"data"`
+}
+
+type testServer struct {
+	Server        *httptest.Server
+	ContentHeader string
+	FtwHeader     string
+	Method        string
+	Path          string
+	Body          string
+}
+
+func newTestServer(responseBody string) (ts *testServer) {
+
+	ts = &testServer{}
+
+	ts.Server = httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+
+		body, err := io.ReadAll(request.Body)
+		Expect(err).ToNot(HaveOccurred())
+
+		ts.ContentHeader = request.Header.Get("Content-Type")
+		ts.FtwHeader = request.Header.Get("ForThe")
+		ts.Method = request.Method
+		ts.Path = request.RequestURI
+		ts.Body = string(body)
+
+		fmt.Fprint(writer, responseBody)
+	}))
+
+	return
 }

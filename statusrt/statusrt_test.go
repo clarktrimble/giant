@@ -1,15 +1,13 @@
-package statusrt_test
+package statusrt
 
 import (
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"github.com/clarktrimble/giant/mock"
-	. "github.com/clarktrimble/giant/statusrt"
 )
 
 func TestStatusRt(t *testing.T) {
@@ -38,7 +36,7 @@ var _ = Describe("StatusRt", func() {
 			When("status is in the 200's", func() {
 				BeforeEach(func() {
 					rt = &StatusRt{}
-					rt.Wrap(&mock.TestRt{
+					rt.Wrap(&testRt{
 						Status: 201,
 					})
 
@@ -58,7 +56,7 @@ var _ = Describe("StatusRt", func() {
 			When("status is _not_ in the 200's", func() {
 				BeforeEach(func() {
 					rt = &StatusRt{}
-					rt.Wrap(&mock.TestRt{
+					rt.Wrap(&testRt{
 						Status: 404,
 					})
 
@@ -76,3 +74,18 @@ var _ = Describe("StatusRt", func() {
 	})
 
 })
+
+type testRt struct {
+	Status int
+}
+
+func (rt *testRt) RoundTrip(request *http.Request) (response *http.Response, err error) {
+
+	response = &http.Response{
+		StatusCode: rt.Status,
+		Body:       io.NopCloser(strings.NewReader(`{"ima": "pc"}`)),
+		Request:    request,
+	}
+
+	return
+}

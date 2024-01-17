@@ -87,7 +87,7 @@ func (cfg *Config) New() *Giant {
 
 // NewWithTrippers is a convenience method that adds StatusRt and Logrt after creating a client.
 // If User and Pass are defined in Config BasicRt is added as well.
-func (cfg *Config) NewWithTrippers(lgr Logger) (giant *Giant) {
+func (cfg *Config) NewWithTrippers(lgr logger) (giant *Giant) {
 
 	giant = cfg.New()
 
@@ -103,7 +103,7 @@ func (cfg *Config) NewWithTrippers(lgr Logger) (giant *Giant) {
 }
 
 // Use wraps the current transport with a round tripper
-func (giant *Giant) Use(tripper Tripper) {
+func (giant *Giant) Use(tripper tripper) {
 
 	tripper.Wrap(giant.Client.Transport)
 	giant.Client.Transport = tripper
@@ -184,6 +184,17 @@ func (giant *Giant) SendObject(ctx context.Context, method, path string, sndObj,
 }
 
 // unexported
+
+type logger interface {
+	Info(ctx context.Context, msg string, kv ...any)
+	Error(ctx context.Context, msg string, err error, kv ...any)
+	WithFields(ctx context.Context, kv ...any) context.Context
+}
+
+type tripper interface {
+	http.RoundTripper
+	Wrap(next http.RoundTripper)
+}
 
 func marshal(obj any) (data []byte, err error) {
 

@@ -1,14 +1,13 @@
-package basicrt_test
+package basicrt
 
 import (
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	. "github.com/clarktrimble/giant/basicrt"
-	"github.com/clarktrimble/giant/mock"
 )
 
 func TestBasicRt(t *testing.T) {
@@ -35,7 +34,7 @@ var _ = Describe("BasicRt", func() {
 			When("all is well", func() {
 				BeforeEach(func() {
 					rt = New("top", "secret")
-					rt.Wrap(&mock.TestRt{
+					rt.Wrap(&testRt{
 						Status: 201,
 					})
 
@@ -52,3 +51,18 @@ var _ = Describe("BasicRt", func() {
 
 	})
 })
+
+type testRt struct {
+	Status int
+}
+
+func (rt *testRt) RoundTrip(request *http.Request) (response *http.Response, err error) {
+
+	response = &http.Response{
+		StatusCode: rt.Status,
+		Body:       io.NopCloser(strings.NewReader(`{"ima": "pc"}`)),
+		Request:    request,
+	}
+
+	return
+}

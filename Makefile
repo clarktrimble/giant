@@ -1,7 +1,7 @@
 EXECS   := $(wildcard examples/*)
 TARGETS := ${EXECS:examples/%=%}
 
-TESTA   := ${shell go list ./... | grep -v /examples/ | grep -v /test/ | grep -v /mock }
+TESTA   := ${shell go list ./... | grep -v /examples/ }
 
 BRANCH   := ${shell git branch --show-current}
 REVCNT   := ${shell git rev-list --count $(BRANCH)}
@@ -21,16 +21,16 @@ gen:
 	go generate ./...
 
 lint:
-	CGO_ENABLED=0 golangci-lint run ./...
+	golangci-lint run ./...
 
 test:
-	CGO_ENABLED=0 go test -count 1 ${TESTA}
+	go test -count 1 ${TESTA}
 
 build: ${TARGETS}
 	@echo ":: Done"
 
 ${TARGETS}:
 	@echo ":: Building $@"
-	CGO_ENABLED=0 go build -ldflags '${LDFLAGS}' -o bin/$@ examples/$@/main.go
+	go build -ldflags '${LDFLAGS}' -o bin/$@ examples/$@/main.go
 
 .PHONY:  test

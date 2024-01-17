@@ -17,23 +17,16 @@ const (
 	idLen int = 7
 )
 
-// Logger specifies a logger.
-type Logger interface {
-	Info(ctx context.Context, msg string, kv ...any)
-	Error(ctx context.Context, msg string, err error, kv ...any)
-	WithFields(ctx context.Context, kv ...any) context.Context
-}
-
 // LogRt implements the Tripper interface logging requests and responses.
 type LogRt struct {
 	RedactHeaders map[string]bool
 	SkipBody      bool
-	Logger        Logger
+	Logger        logger
 	next          http.RoundTripper
 }
 
 // New creates a LogRt.
-func New(lgr Logger, redactHeaders []string, skipBody bool) (logRt *LogRt) {
+func New(lgr logger, redactHeaders []string, skipBody bool) (logRt *LogRt) {
 
 	logRt = &LogRt{
 		RedactHeaders: map[string]bool{},
@@ -50,12 +43,12 @@ func New(lgr Logger, redactHeaders []string, skipBody bool) (logRt *LogRt) {
 	return
 }
 
-// Wrap sets the next round tripper, thereby wrapping it
+// Wrap sets the next round tripper, thereby wrapping it.
 func (rt *LogRt) Wrap(next http.RoundTripper) {
 	rt.next = next
 }
 
-// RoundTrip logs the request and response
+// RoundTrip logs the request and response.
 func (rt *LogRt) RoundTrip(request *http.Request) (response *http.Response, err error) {
 
 	start := time.Now()
@@ -77,6 +70,11 @@ func (rt *LogRt) RoundTrip(request *http.Request) (response *http.Response, err 
 }
 
 // unexported
+
+type logger interface {
+	Info(ctx context.Context, msg string, kv ...any)
+	WithFields(ctx context.Context, kv ...any) context.Context
+}
 
 func (rt *LogRt) requestFields(request *http.Request) (fields []any) {
 
@@ -106,7 +104,6 @@ func (rt *LogRt) requestFields(request *http.Request) (fields []any) {
 	return
 }
 
-// func (rt *LogRt) responseFields(response *http.Response, path string, start time.Time) (fields []any) {
 func (rt *LogRt) responseFields(response *http.Response, start time.Time) (fields []any) {
 
 	fields = []any{
