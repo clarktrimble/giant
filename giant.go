@@ -57,10 +57,19 @@ type Giant struct {
 // New constructs a new client from Config
 func (cfg *Config) New() *Giant {
 
+	all := []uint16{}
+	for _, cfr := range tls.CipherSuites() {
+		all = append(all, cfr.ID)
+	}
+	// Todo: cfg!!
+
 	transport := &http.Transport{
 		Dial:                (&net.Dialer{Timeout: cfg.TimeoutShort}).Dial,
 		TLSHandshakeTimeout: cfg.TimeoutShort,
-		TLSClientConfig:     &tls.Config{InsecureSkipVerify: cfg.SkipVerify}, //nolint: gosec
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: cfg.SkipVerify,
+			CipherSuites:       all,
+		}, //nolint: gosec
 	}
 
 	// copy header cfg pairs into map ignoring odd count
