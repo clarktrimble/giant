@@ -105,9 +105,9 @@ func (cfg *Config) New() *Giant {
 		Dial:                (&net.Dialer{Timeout: cfg.TimeoutShort}).Dial,
 		TLSHandshakeTimeout: cfg.TimeoutShort,
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: cfg.SkipVerify,
+			InsecureSkipVerify: cfg.SkipVerify, //nolint: gosec
 			CipherSuites:       ciphers,
-		}, //nolint: gosec
+		},
 	}
 
 	// copy header cfg pairs into map ignoring odd count
