@@ -34,6 +34,8 @@ type Config struct {
 	Headers []string `json:"headers,omitempty" desc:"header pairs to be sent with every request"`
 	// SkipVerify skips verification of ssl certificates (dev only pls!)
 	SkipVerify bool `json:"skip_verify" desc:"skip cert verification"`
+	// Ciphers overrides default tls ciphers
+	Ciphers []uint16 `json:"ciphers" desc:"ciphers override"`
 	// User is for basic auth in NewWithTrippers.
 	User string `json:"user,omitempty" desc:"username for basic auth"`
 	// Pass is for basic auth in NewWithTrippers.
@@ -57,10 +59,18 @@ type Giant struct {
 // New constructs a new client from Config
 func (cfg *Config) New() *Giant {
 
+	var ciphers []uint16
+	if len(cfg.Ciphers) > 0 {
+		ciphers = cfg.Ciphers
+	}
+
 	transport := &http.Transport{
 		Dial:                (&net.Dialer{Timeout: cfg.TimeoutShort}).Dial,
 		TLSHandshakeTimeout: cfg.TimeoutShort,
-		TLSClientConfig:     &tls.Config{InsecureSkipVerify: cfg.SkipVerify}, //nolint: gosec
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: cfg.SkipVerify, //nolint: gosec
+			CipherSuites:       ciphers,
+		},
 	}
 
 	// copy header cfg pairs into map ignoring odd count
@@ -187,6 +197,7 @@ func (giant *Giant) SendObject(ctx context.Context, method, path string, sndObj,
 
 type logger interface {
 	Info(ctx context.Context, msg string, kv ...any)
+	Debug(ctx context.Context, msg string, kv ...any)
 	Error(ctx context.Context, msg string, err error, kv ...any)
 	WithFields(ctx context.Context, kv ...any) context.Context
 }

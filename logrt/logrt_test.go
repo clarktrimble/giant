@@ -36,7 +36,7 @@ var _ = Describe("LogRt", func() {
 
 		BeforeEach(func() {
 			lgr = &loggerMock{
-				InfoFunc: func(ctx context.Context, msg string, kv ...any) {},
+				DebugFunc: func(ctx context.Context, msg string, kv ...any) {},
 				WithFieldsFunc: func(ctx context.Context, kv ...any) context.Context {
 					return ctx
 				},
@@ -74,7 +74,7 @@ var _ = Describe("LogRt", func() {
 					Expect(wfc[0].Ctx).To(Equal(ctx))
 					Expect(wfc[0].Kv).To(HaveExactElements("request_id", "GIehp1s"))
 
-					ic := lgr.InfoCalls()
+					ic := lgr.DebugCalls()
 					Expect(ic).To(HaveLen(2))
 					Expect(ic[0].Msg).To(Equal("sending request"))
 					Expect(ic[0].Kv).To(HaveExactElements(
@@ -138,7 +138,7 @@ var _ = Describe("LogRt", func() {
 					Expect(wfc[0].Ctx).To(Equal(ctx))
 					Expect(wfc[0].Kv).To(HaveExactElements("request_id", "GIehp1s"))
 
-					ic := lgr.InfoCalls()
+					ic := lgr.DebugCalls()
 					Expect(ic).To(HaveLen(2))
 					Expect(ic[0].Msg).To(Equal("sending request"))
 					Expect(ic[0].Kv).To(HaveExactElements(

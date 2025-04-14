@@ -57,14 +57,14 @@ func (rt *LogRt) RoundTrip(request *http.Request) (response *http.Response, err 
 	ctx = rt.Logger.WithFields(ctx, "request_id", hondo.Rand(idLen))
 	request = request.WithContext(ctx)
 
-	rt.Logger.Info(ctx, "sending request", rt.requestFields(request)...)
+	rt.Logger.Debug(ctx, "sending request", rt.requestFields(request)...)
 
 	response, err = rt.next.RoundTrip(request)
 	if err != nil {
 		return
 	}
 
-	rt.Logger.Info(ctx, "received response", rt.responseFields(response, start)...)
+	rt.Logger.Debug(ctx, "received response", rt.responseFields(response, start)...)
 
 	return
 }
@@ -73,6 +73,7 @@ func (rt *LogRt) RoundTrip(request *http.Request) (response *http.Response, err 
 
 type logger interface {
 	Info(ctx context.Context, msg string, kv ...any)
+	Debug(ctx context.Context, msg string, kv ...any)
 	WithFields(ctx context.Context, kv ...any) context.Context
 }
 
