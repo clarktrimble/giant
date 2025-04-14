@@ -26,6 +26,11 @@ func (ml *MinLog) Info(ctx context.Context, msg string, kv ...any) {
 	fmt.Printf("msg > %s  %s\n", msg, strings.Join(strs, "|"))
 }
 
+func (ml *MinLog) Debug(ctx context.Context, msg string, kv ...any) {
+	// Todo: at least signal this is debug
+	ml.Info(ctx, msg, kv)
+}
+
 func (ml *MinLog) Error(ctx context.Context, msg string, err error, kv ...any) {
 
 	// Todo: include err
