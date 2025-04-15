@@ -33,7 +33,7 @@ type Config struct {
 	// Headers are set when making a request
 	Headers []string `json:"headers,omitempty" desc:"header pairs to be sent with every request"`
 	// SkipVerify skips verification of ssl certificates (dev only pls!)
-	SkipVerify bool `json:"skip_verify" desc:"skip cert verification"`
+	SkipVerify bool `json:"skip_verify" desc:"skip cert verification" default:"false"`
 	// Ciphers overrides default tls ciphers
 	Ciphers []uint16 `json:"ciphers" desc:"ciphers override"`
 	// User is for basic auth in NewWithTrippers.
@@ -43,7 +43,7 @@ type Config struct {
 	// RedactHeaders are headers to be redacted from logging in NewWithTrippers.
 	RedactHeaders []string `json:"redact_headers,omitempty" desc:"headers to redact from request logging"`
 	// SkipBody when true request and response bodies are not logged in NewWithTrippers..
-	SkipBody bool `json:"skip_body" desc:"skip logging of body for request and response"`
+	SkipBody bool `json:"skip_body" desc:"skip logging of body for request and response" default:"false"`
 }
 
 // Giant represents an http client
