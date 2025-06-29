@@ -193,6 +193,14 @@ func (giant *Giant) SendObject(ctx context.Context, method, path string, sndObj,
 	return
 }
 
+// Uri returns the base uri for use in links, etc.
+func (giant *Giant) Uri() string {
+
+	// Todo: privatize BaseUri and rename
+	// Todo: unit, yeah, but unit!
+	return giant.BaseUri
+}
+
 // unexported
 
 type logger interface {

@@ -1,5 +1,5 @@
 ## ginked from https://github.com/pkg/json 1/15/23
-## 
+##
 ## agreeing with Mr. Cheney on disabled linters
 ## commented ones are mostly not generating hits
 ## Todo: try out on more code and settle dust
@@ -26,7 +26,7 @@ linters:
     ###- exhaustivestruct # Replaced by exhaustruct.
     - exhaustruct
     - exhaustive # too annoying, too hard to disable with comments
-    - exportloopref ### suppress deprecation warning, bleh 
+    - exportloopref ### suppress deprecation warning, bleh
     - fatcontext ### want to be sarcastic, anyway should be ok in test
     #- forbidigo
     #- funlen
@@ -37,7 +37,7 @@ linters:
     - gocritic
     #- gocyclo
     - godot
-    #- godox
+    - godox ## todo want pct
     ###- goerr113
     - gofumpt
     ###- golint # Replaced by revive.
