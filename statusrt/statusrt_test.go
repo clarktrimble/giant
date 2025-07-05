@@ -66,7 +66,7 @@ var _ = Describe("StatusRt", func() {
 				It("returns an error", func() {
 
 					Expect(err).To(HaveOccurred())
-					Expect(response.StatusCode).To(Equal(404))
+					Expect(response).To(BeNil())
 				})
 			})
 		})
