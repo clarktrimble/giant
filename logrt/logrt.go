@@ -64,6 +64,7 @@ func (rt *LogRt) RoundTrip(request *http.Request) (response *http.Response, err 
 		return
 	}
 
+	// Todo: short circuited by statusrt error, I can haz both?
 	rt.Logger.Debug(ctx, "received response", rt.responseFields(response, start)...)
 
 	return
