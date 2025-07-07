@@ -44,6 +44,8 @@ type Config struct {
 	RedactHeaders []string `json:"redact_headers,omitempty" desc:"headers to redact from request logging"`
 	// SkipBody when true request and response bodies are not logged in NewWithTrippers..
 	SkipBody bool `json:"skip_body" desc:"skip logging of body for request and response" default:"false"`
+	// UnixSocket
+	UnixSocket string `json:"unix_socket,omitempty" desc:"unix socket"`
 }
 
 // Giant represents an http client
@@ -71,6 +73,15 @@ func (cfg *Config) New() *Giant {
 			InsecureSkipVerify: cfg.SkipVerify, //nolint: gosec
 			CipherSuites:       ciphers,
 		},
+	}
+
+	// Todo: unit
+	if cfg.UnixSocket != "" {
+		transport = &http.Transport{
+			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				return net.Dial("unix", cfg.UnixSocket)
+			},
+		}
 	}
 
 	// copy header cfg pairs into map ignoring odd count
