@@ -252,12 +252,6 @@ func (rq Request) httpRequest(ctx context.Context, baseUri string) (request *htt
 		return
 	}
 
-	if rq.Body == nil {
-		request.ContentLength = 0
-		request.Header.Set("Transfer-Encoding", "identity")
-
-	}
-
 	for key, val := range rq.Headers {
 		request.Header.Set(key, val)
 	}
