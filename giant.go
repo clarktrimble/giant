@@ -20,6 +20,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Todo: use BaseUrl: url.URL instead of string
+
 // Config represents giant config
 type Config struct {
 	// BaseUri is the scheme, domain, optionally port and/or path

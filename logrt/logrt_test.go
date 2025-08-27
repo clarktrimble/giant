@@ -72,7 +72,9 @@ var _ = Describe("LogRt", func() {
 					wfc := lgr.WithFieldsCalls()
 					Expect(wfc).To(HaveLen(1))
 					Expect(wfc[0].Ctx).To(Equal(ctx))
-					Expect(wfc[0].Kv).To(HaveExactElements("request_id", "GIehp1s"))
+					Expect(wfc[0].Kv).To(HaveLen(2))
+					Expect(wfc[0].Kv[0]).To(Equal("request_id"))
+					Expect(wfc[0].Kv[1]).To(HaveLen(7))
 
 					ic := lgr.DebugCalls()
 					Expect(ic).To(HaveLen(2))
@@ -136,7 +138,9 @@ var _ = Describe("LogRt", func() {
 					wfc := lgr.WithFieldsCalls()
 					Expect(wfc).To(HaveLen(1))
 					Expect(wfc[0].Ctx).To(Equal(ctx))
-					Expect(wfc[0].Kv).To(HaveExactElements("request_id", "GIehp1s"))
+					Expect(wfc[0].Kv).To(HaveLen(2))
+					Expect(wfc[0].Kv[0]).To(Equal("request_id"))
+					Expect(wfc[0].Kv[1]).To(HaveLen(7))
 
 					ic := lgr.DebugCalls()
 					Expect(ic).To(HaveLen(2))

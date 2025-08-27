@@ -2,9 +2,7 @@
 ##
 ## agreeing with Mr. Cheney on disabled linters
 ## commented ones are mostly not generating hits
-## Todo: try out on more code and settle dust
-###run:
-###  go: '1.21'
+## Todo: how to best share b/t projects?
 
 linters:
   enable-all: true
@@ -19,6 +17,7 @@ linters:
     - depguard # too annoying
     #- dupl
     #- dupword
+    - err113
     #- errcheck
     #- errchkjson
     #- errname
@@ -26,8 +25,8 @@ linters:
     ###- exhaustivestruct # Replaced by exhaustruct.
     - exhaustruct
     - exhaustive # too annoying, too hard to disable with comments
-    - exportloopref ### suppress deprecation warning, bleh
     - fatcontext ### want to be sarcastic, anyway should be ok in test
+    - forcetypeassert # more stupid stuff
     #- forbidigo
     #- funlen
     - gci
@@ -37,7 +36,7 @@ linters:
     - gocritic
     #- gocyclo
     - godot
-    - godox ## todo want pct
+    - godox ## want Todo's today, pct
     ###- goerr113
     - gofumpt
     ###- golint # Replaced by revive.
@@ -49,6 +48,7 @@ linters:
     - lll
     #- maintidx
     ###- maligned # Replaced by govet
+    - mnd
     - musttag # flaky, fires on structs which aren't JSON marshalled
     - nakedret # pct
     #- nilnil
@@ -63,6 +63,7 @@ linters:
     ###- structcheck # replaced with unused
     - tagliatelle
     - tagalign # too fussy
+    - tenv # deprecated horseshite, blah
     - testpackage # too annoying
     #- thelper
     - usestdlibvars
@@ -71,7 +72,6 @@ linters:
     - whitespace
     - wrapcheck
     - wsl
-
 linters-settings:
   #gofumpt:
     #module-path: github.com/pkg/json
