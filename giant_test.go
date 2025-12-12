@@ -40,7 +40,7 @@ var _ = Describe("Giant", func() {
 				cfg = &Config{
 					BaseUri:       "https://api.open-meteo.com",
 					Headers:       []string{"X-Authorization-Token", "this-is-secret", "bargle"},
-					RedactHeaders: []string{"X-Authorization-Token"},
+					RedactHeaders: []string{"X-Authorization-TOKEN"},
 				}
 
 				lgr = &loggerMock{}

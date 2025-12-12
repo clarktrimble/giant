@@ -37,7 +37,7 @@ func New(lgr logger, redactHeaders []string, skipBody bool) (logRt *LogRt) {
 	// always redact for basic auth
 
 	for _, key := range append(redactHeaders, "Authorization") {
-		logRt.RedactHeaders[key] = true
+		logRt.RedactHeaders[http.CanonicalHeaderKey(key)] = true
 	}
 
 	return
