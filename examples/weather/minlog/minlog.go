@@ -26,19 +26,16 @@ func (ml *MinLog) Info(ctx context.Context, msg string, kv ...any) {
 	fmt.Printf("msg > %s  %s\n", msg, strings.Join(strs, "|"))
 }
 
-func (ml *MinLog) Debug(ctx context.Context, msg string, kv ...any) {
-	// Todo: at least signal this is debug
+func (ml *MinLog) Trace(ctx context.Context, msg string, kv ...any) {
 	ml.Info(ctx, msg, kv)
 }
 
 func (ml *MinLog) Error(ctx context.Context, msg string, err error, kv ...any) {
-
-	// Todo: include err
+	kv = append([]any{"error", err}, kv...)
 	ml.Info(ctx, msg, kv)
 }
 
 func (ml *MinLog) WithFields(ctx context.Context, kv ...any) context.Context {
-
-	// Todo: stash kv
+	// ignoring precious kv :/
 	return ctx
 }

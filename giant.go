@@ -1,4 +1,4 @@
-// Package giant provides for reuse of comman json api client patterns
+// Package giant provides for reuse of common json api client patterns
 // while doing its best to not get in the way :)
 package giant
 
@@ -9,12 +9,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/clarktrimble/giant/basicrt"
+	"github.com/clarktrimble/giant/logger"
 	"github.com/clarktrimble/giant/logrt"
 	"github.com/clarktrimble/giant/statusrt"
 	"github.com/pkg/errors"
@@ -110,7 +112,7 @@ func (cfg *Config) New() *Giant {
 
 // NewWithTrippers is a convenience method that adds StatusRt and Logrt after creating a client.
 // If User and Pass are defined in Config BasicRt is added as well.
-func (cfg *Config) NewWithTrippers(lgr logger) (giant *Giant) {
+func (cfg *Config) NewWithTrippers(lgr logger.Logger) (giant *Giant) {
 
 	giant = cfg.New()
 
@@ -149,9 +151,10 @@ type Request struct {
 // leaving read/close of response body to caller
 func (giant *Giant) Send(ctx context.Context, rq Request) (response *http.Response, err error) {
 
-	for key, val := range giant.Headers {
-		rq.Headers[key] = val
+	if rq.Headers == nil {
+		rq.Headers = map[string]string{}
 	}
+	maps.Copy(rq.Headers, giant.Headers)
 
 	request, err := rq.httpRequest(ctx, giant.BaseUri)
 	if err != nil {
@@ -215,13 +218,6 @@ func (giant *Giant) Uri() string {
 }
 
 // unexported
-
-type logger interface {
-	Info(ctx context.Context, msg string, kv ...any)
-	Debug(ctx context.Context, msg string, kv ...any)
-	Error(ctx context.Context, msg string, err error, kv ...any)
-	WithFields(ctx context.Context, kv ...any) context.Context
-}
 
 type tripper interface {
 	http.RoundTripper

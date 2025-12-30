@@ -33,4 +33,12 @@ ${TARGETS}:
 	@echo ":: Building $@"
 	go build -ldflags '${LDFLAGS}' -o bin/$@ examples/$@/main.go
 
-.PHONY:  test
+.PHONY:  test tag
+
+# Todo: sync with canaon
+
+tag:
+        @echo "Current: $$(git describe --tags --abbrev=0)"
+        @read -p "New tag: " tag && git tag $$tag && \
+          read -p "Push $$tag? [y/N] " confirm && \
+          if [ "$$confirm" = "y" ]; then git push origin $$tag; fi

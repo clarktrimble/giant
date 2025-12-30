@@ -15,7 +15,7 @@ import (
 	"github.com/clarktrimble/giant/logrt"
 )
 
-//go:generate moq -out mock_test.go . logger
+//go:generate moq -pkg giant -out mock_test.go ./logger Logger
 
 func TestGiant(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -27,7 +27,7 @@ var _ = Describe("Giant", func() {
 	Describe("creating a client with trippers", func() {
 		var (
 			cfg *Config
-			lgr *loggerMock
+			lgr *LoggerMock
 			gnt *Giant
 		)
 
@@ -43,7 +43,7 @@ var _ = Describe("Giant", func() {
 					RedactHeaders: []string{"X-Authorization-TOKEN"},
 				}
 
-				lgr = &loggerMock{}
+				lgr = &LoggerMock{}
 			})
 
 			It("creates a client with LogRt as first transport", func() {

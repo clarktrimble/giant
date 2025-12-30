@@ -3,12 +3,12 @@ package logrt
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"time"
 
+	"github.com/clarktrimble/giant/logger"
 	"github.com/clarktrimble/hondo"
 	"github.com/pkg/errors"
 )
@@ -21,12 +21,12 @@ const (
 type LogRt struct {
 	RedactHeaders map[string]bool
 	SkipBody      bool
-	Logger        logger
+	Logger        logger.Logger
 	next          http.RoundTripper
 }
 
 // New creates a LogRt.
-func New(lgr logger, redactHeaders []string, skipBody bool) (logRt *LogRt) {
+func New(lgr logger.Logger, redactHeaders []string, skipBody bool) (logRt *LogRt) {
 
 	logRt = &LogRt{
 		RedactHeaders: map[string]bool{},
@@ -57,7 +57,7 @@ func (rt *LogRt) RoundTrip(request *http.Request) (response *http.Response, err 
 	ctx = rt.Logger.WithFields(ctx, "request_id", hondo.Rand(idLen))
 	request = request.WithContext(ctx)
 
-	rt.Logger.Debug(ctx, "sending request", rt.requestFields(request)...)
+	rt.Logger.Trace(ctx, "sending request", rt.requestFields(request)...)
 
 	response, err = rt.next.RoundTrip(request)
 	if err != nil {
@@ -65,18 +65,12 @@ func (rt *LogRt) RoundTrip(request *http.Request) (response *http.Response, err 
 	}
 
 	// Todo: short circuited by statusrt error, I can haz both?
-	rt.Logger.Debug(ctx, "received response", rt.responseFields(response, start)...)
+	rt.Logger.Trace(ctx, "received response", rt.responseFields(response, start)...)
 
 	return
 }
 
 // unexported
-
-type logger interface {
-	Info(ctx context.Context, msg string, kv ...any)
-	Debug(ctx context.Context, msg string, kv ...any)
-	WithFields(ctx context.Context, kv ...any) context.Context
-}
 
 func (rt *LogRt) requestFields(request *http.Request) (fields []any) {
 
@@ -95,7 +89,7 @@ func (rt *LogRt) requestFields(request *http.Request) (fields []any) {
 
 		body, err := read(request.Body)
 		if err != nil {
-			body = []byte(fmt.Sprintf("error: %s", err))
+			body = fmt.Appendf(nil, "error: %s", err)
 		}
 		request.Body = io.NopCloser(bytes.NewBuffer(body))
 
@@ -125,7 +119,7 @@ func (rt *LogRt) responseFields(response *http.Response, start time.Time) (field
 
 		body, err := read(response.Body)
 		if err != nil {
-			body = []byte(fmt.Sprintf("error: %s", err))
+			body = fmt.Appendf(nil, "error: %s", err)
 		}
 		response.Body = io.NopCloser(bytes.NewBuffer(body))
 

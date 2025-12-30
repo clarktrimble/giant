@@ -3,7 +3,6 @@ package logrt
 import (
 	"context"
 	"io"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
@@ -13,7 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-//go:generate moq -out mock_test.go . logger
+//go:generate moq -pkg logrt -out mock_test.go ../logger Logger
 
 func TestLogRt(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -30,13 +29,13 @@ var _ = Describe("LogRt", func() {
 			response *http.Response
 			ctx      context.Context
 
-			lgr *loggerMock
+			lgr *LoggerMock
 			err error
 		)
 
 		BeforeEach(func() {
-			lgr = &loggerMock{
-				DebugFunc: func(ctx context.Context, msg string, kv ...any) {},
+			lgr = &LoggerMock{
+				TraceFunc: func(ctx context.Context, msg string, kv ...any) {},
 				WithFieldsFunc: func(ctx context.Context, kv ...any) context.Context {
 					return ctx
 				},
@@ -46,8 +45,6 @@ var _ = Describe("LogRt", func() {
 			rt.Wrap(&testRt{
 				Status: 200,
 			})
-
-			rand.Seed(1) //nolint:staticcheck // predictable request_id
 
 			request, err = http.NewRequest("PUT", "https://boxworld.org/cardboard", nil)
 			Expect(err).ToNot(HaveOccurred())
@@ -76,7 +73,7 @@ var _ = Describe("LogRt", func() {
 					Expect(wfc[0].Kv[0]).To(Equal("request_id"))
 					Expect(wfc[0].Kv[1]).To(HaveLen(7))
 
-					ic := lgr.DebugCalls()
+					ic := lgr.TraceCalls()
 					Expect(ic).To(HaveLen(2))
 					Expect(ic[0].Msg).To(Equal("sending request"))
 					Expect(ic[0].Kv).To(HaveExactElements(
@@ -142,7 +139,7 @@ var _ = Describe("LogRt", func() {
 					Expect(wfc[0].Kv[0]).To(Equal("request_id"))
 					Expect(wfc[0].Kv[1]).To(HaveLen(7))
 
-					ic := lgr.DebugCalls()
+					ic := lgr.TraceCalls()
 					Expect(ic).To(HaveLen(2))
 					Expect(ic[0].Msg).To(Equal("sending request"))
 					Expect(ic[0].Kv).To(HaveExactElements(

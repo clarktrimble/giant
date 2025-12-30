@@ -34,7 +34,7 @@ func (ct *CivilTime) UnmarshalJSON(data []byte) (err error) {
 func (ct CivilTime) MarshalJSON() (data []byte, err error) {
 
 	str := time.Time(ct).Format("2006-01-02T15:04")
-	data = []byte(fmt.Sprintf(`"%s"`, str))
+	data = fmt.Appendf(nil, `"%s"`, str)
 
 	return
 }
