@@ -42,6 +42,10 @@ type Config struct {
 	User string `json:"user,omitempty" desc:"username for basic auth"`
 	// Pass is for basic auth in NewWithTrippers.
 	Pass Redact `json:"pass,omitempty" desc:"password for basic auth"`
+	// Todo: what's this??
+	//KeyHeader string `json:"api_key_header,omitempty" desc:"Todo"`
+	//ApiKey    Redact `json:"api_key_value,omitempty" desc:"Todo and sneak into redact headers"`
+	// Todo: orrrrrrrr a giant client helper in bfc would work?
 	// RedactHeaders are headers to be redacted from logging in NewWithTrippers.
 	RedactHeaders []string `json:"redact_headers,omitempty" desc:"headers to redact from request logging"`
 	// SkipBody when true request and response bodies are not logged in NewWithTrippers..
