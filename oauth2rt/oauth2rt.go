@@ -7,16 +7,17 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
 )
 
-// Todo: support form-encoded token requests (application/x-www-form-urlencoded)
-// Todo: proactive refresh via expires_in and/or adopt golang.org/x/oauth2
+// Todo: depend on logger in m-monorepo, when we get there someday
+// Todo: someday support form-encoded token requests (application/x-www-form-urlencoded)
+// Todo: someday proactive refresh via expires_in and/or adopt golang.org/x/oauth2
 
 // Logger is an optional logger for token operations.
-// Todo: depend on logger from above
 type Logger interface {
 	Info(ctx context.Context, msg string, kv ...any)
 	Debug(ctx context.Context, msg string, kv ...any)
@@ -71,6 +72,7 @@ func (rt *OAuth2Rt) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	// retry once on 401
 	if resp.StatusCode == http.StatusUnauthorized {
+		rt.Logger.Info(ctx, "received 401, refreshing token")
 		resp.Body.Close()
 
 		rt.clearToken()
@@ -103,6 +105,7 @@ func (rt *OAuth2Rt) getToken(ctx context.Context) (token string, err error) {
 	token = rt.token
 	rt.mu.RUnlock()
 	if token != "" {
+		rt.Logger.Debug(ctx, "using cached oauth token")
 		return
 	}
 
@@ -133,6 +136,7 @@ func (rt *OAuth2Rt) clearToken() {
 func (rt *OAuth2Rt) refreshToken(ctx context.Context) (string, error) {
 
 	tokenURL := rt.BaseUri + rt.TokenPath
+	rt.Logger.Debug(ctx, "requesting oauth token", "url", tokenURL)
 
 	payload, err := json.Marshal(map[string]string{
 		"grant_type":    "client_credentials",
@@ -143,7 +147,6 @@ func (rt *OAuth2Rt) refreshToken(ctx context.Context) (string, error) {
 		return "", errors.Wrap(err, "failed to marshal token request")
 	}
 
-	// Todo: clean up logging in here
 	req, err := http.NewRequestWithContext(ctx, "POST", tokenURL, bytes.NewReader(payload))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to create token request")
@@ -165,18 +168,18 @@ func (rt *OAuth2Rt) refreshToken(ctx context.Context) (string, error) {
 		return "", errors.Errorf("token request returned %d: %s", resp.StatusCode, body)
 	}
 
-	rt.Logger.Debug(ctx, "refreshed token", "response", string(body))
-
-	var result struct {
-		AccessToken string `json:"access_token"`
-	}
-	if err := json.Unmarshal(body, &result); err != nil {
+	var data map[string]any
+	if err := json.Unmarshal(body, &data); err != nil {
 		return "", errors.Wrap(err, "failed to decode token response")
 	}
 
-	if result.AccessToken == "" {
+	accessToken, _ := data["access_token"].(string)
+	if accessToken == "" {
 		return "", errors.New("token response missing access_token")
 	}
 
-	return result.AccessToken, nil
+	data["access_token"] = strings.Repeat("x", len(accessToken))
+	rt.Logger.Info(ctx, "oauth token refreshed", "response", data)
+
+	return accessToken, nil
 }
