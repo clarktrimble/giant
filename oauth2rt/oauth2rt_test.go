@@ -130,6 +130,37 @@ var _ = Describe("OAuth2Rt", func() {
 				})
 			})
 
+			When("api returns 403", func() {
+				BeforeEach(func() {
+					mock = &mockRt{
+						TokenResponse:  `{"access_token": "fresh-token"}`,
+						APIStatus:      403,
+						RetryAPIStatus: 200,
+					}
+
+					rt = &OAuth2Rt{
+						BaseUri:      "https://api.example.com",
+						TokenPath:    "/api/oauth",
+						ClientID:     "my-client",
+						ClientSecret: "my-secret",
+						Logger:       &nopLogger{},
+						token:        "stale-token",
+					}
+					rt.Wrap(mock)
+
+					request, err = http.NewRequest("GET", "https://api.example.com/data", nil)
+					Expect(err).ToNot(HaveOccurred())
+				})
+
+				It("clears cache, fetches new token, and retries", func() {
+					Expect(err).ToNot(HaveOccurred())
+					Expect(response.StatusCode).To(Equal(200))
+					Expect(mock.LastAuthHeader).To(Equal("Bearer fresh-token"))
+					Expect(mock.TokenRequests).To(Equal(1))
+					Expect(mock.APIRequests).To(Equal(2))
+				})
+			})
+
 			When("api returns 401 on POST with body", func() {
 				BeforeEach(func() {
 					mock = &mockRt{

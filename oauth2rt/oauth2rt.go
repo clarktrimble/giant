@@ -14,10 +14,13 @@ import (
 )
 
 // Todo: depend on logger in m-monorepo, when we get there someday
+// Todo: swith to New rather than direct construction.
+// Todo: no tripper logging etc here, prolly correct but doc
+// Todo: look at wrapping golang.org/x/oauth2 instead of hand-vibed soln
 // Todo: someday support form-encoded token requests (application/x-www-form-urlencoded)
 // Todo: someday proactive refresh via expires_in and/or adopt golang.org/x/oauth2
 
-// Logger is an optional logger for token operations.
+// Logger specifies a contextual structured logger.
 type Logger interface {
 	Info(ctx context.Context, msg string, kv ...any)
 	Debug(ctx context.Context, msg string, kv ...any)
@@ -70,9 +73,9 @@ func (rt *OAuth2Rt) RoundTrip(req *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 
-	// retry once on 401
-	if resp.StatusCode == http.StatusUnauthorized {
-		rt.Logger.Info(ctx, "received 401, refreshing token")
+	// retry once on 401/403
+	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+		rt.Logger.Info(ctx, "received 401/403, refreshing token")
 		resp.Body.Close()
 
 		rt.clearToken()
