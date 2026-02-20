@@ -68,9 +68,10 @@ var _ = Describe("Giant", func() {
 				authServer = newOauthTestServer("test-token-123")
 				apiServer = newOauthTestServer("")
 
-				lgr = &loggerMock{
+				lgr = &LoggerMock{
 					InfoFunc:       func(ctx context.Context, msg string, kv ...any) {},
 					DebugFunc:      func(ctx context.Context, msg string, kv ...any) {},
+					TraceFunc:      func(ctx context.Context, msg string, kv ...any) {},
 					WithFieldsFunc: func(ctx context.Context, kv ...any) context.Context { return ctx },
 				}
 			})

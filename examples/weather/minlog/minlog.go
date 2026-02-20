@@ -26,6 +26,12 @@ func (ml *MinLog) Info(ctx context.Context, msg string, kv ...any) {
 	fmt.Printf("msg > %s  %s\n", msg, strings.Join(strs, "|"))
 }
 
+// Todo: consolidate minlogs in the shining future that is monobike
+
+func (ml *MinLog) Debug(ctx context.Context, msg string, kv ...any) {
+	ml.Info(ctx, msg, kv)
+}
+
 func (ml *MinLog) Trace(ctx context.Context, msg string, kv ...any) {
 	ml.Info(ctx, msg, kv)
 }
