@@ -3,6 +3,7 @@ package giant
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/clarktrimble/giant/logrt"
+	"github.com/clarktrimble/launch"
 )
 
 //go:generate moq -out mock_test.go . logger
@@ -53,6 +55,77 @@ var _ = Describe("Giant", func() {
 				logRt, ok := gnt.Client.Transport.(*logrt.LogRt)
 				Expect(ok).To(BeTrue())
 				Expect(logRt.RedactHeaders).To(Equal(map[string]bool{"Authorization": true, "X-Authorization-Token": true}))
+			})
+		})
+
+		When("OAuth2 is configured", func() {
+			var (
+				authServer *oauthTestServer
+				apiServer  *oauthTestServer
+			)
+
+			BeforeEach(func() {
+				authServer = newOauthTestServer("test-token-123")
+				apiServer = newOauthTestServer("")
+
+				lgr = &loggerMock{
+					InfoFunc:       func(ctx context.Context, msg string, kv ...any) {},
+					DebugFunc:      func(ctx context.Context, msg string, kv ...any) {},
+					WithFieldsFunc: func(ctx context.Context, kv ...any) context.Context { return ctx },
+				}
+			})
+
+			AfterEach(func() {
+				authServer.Server.Close()
+				apiServer.Server.Close()
+			})
+
+			When("OAuth2 has its own BaseUri", func() {
+				BeforeEach(func() {
+					cfg = &Config{
+						BaseUri: apiServer.Server.URL,
+						OAuth2: &OAuth2Config{
+							BaseUri:      authServer.Server.URL,
+							TokenPath:    "/oauth/token",
+							ClientID:     "test-client",
+							ClientSecret: launch.Redact("test-secret"),
+						},
+					}
+				})
+
+				It("fetches token from auth server and sets Authorization header", func() {
+					ctx := context.Background()
+					_, err := gnt.SendJson(ctx, "GET", "/api/resource", nil)
+
+					Expect(err).ToNot(HaveOccurred())
+					Expect(authServer.TokenRequested).To(BeTrue())
+					Expect(apiServer.AuthHeader).To(Equal("Bearer test-token-123"))
+				})
+			})
+
+			When("OAuth2 BaseUri is empty", func() {
+				BeforeEach(func() {
+					// single server handles both token and api
+					authServer = newOauthTestServer("fallback-token-456")
+
+					cfg = &Config{
+						BaseUri: authServer.Server.URL,
+						OAuth2: &OAuth2Config{
+							TokenPath:    "/oauth/token",
+							ClientID:     "test-client",
+							ClientSecret: launch.Redact("test-secret"),
+						},
+					}
+				})
+
+				It("uses Config.BaseUri for token endpoint", func() {
+					ctx := context.Background()
+					_, err := gnt.SendJson(ctx, "GET", "/api/resource", nil)
+
+					Expect(err).ToNot(HaveOccurred())
+					Expect(authServer.TokenRequested).To(BeTrue())
+					Expect(authServer.AuthHeader).To(Equal("Bearer fallback-token-456"))
+				})
 			})
 		})
 	})
@@ -240,6 +313,35 @@ func newTestServer(responseBody string) (ts *testServer) {
 		ts.Body = string(body)
 
 		fmt.Fprint(writer, responseBody)
+	}))
+
+	return
+}
+
+type oauthTestServer struct {
+	Server         *httptest.Server
+	Token          string
+	TokenRequested bool
+	AuthHeader     string
+}
+
+func newOauthTestServer(token string) (ots *oauthTestServer) {
+
+	ots = &oauthTestServer{Token: token}
+
+	ots.Server = httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+
+		if request.URL.Path == "/oauth/token" {
+			ots.TokenRequested = true
+			resp := map[string]string{"access_token": ots.Token}
+			writer.Header().Set("Content-Type", "application/json")
+			err := json.NewEncoder(writer).Encode(resp)
+			Expect(err).ToNot(HaveOccurred())
+			return
+		}
+
+		ots.AuthHeader = request.Header.Get("Authorization")
+		fmt.Fprint(writer, `{"status": "ok"}`)
 	}))
 
 	return

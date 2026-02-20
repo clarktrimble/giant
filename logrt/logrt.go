@@ -34,7 +34,7 @@ func New(lgr logger, redactHeaders []string, skipBody bool) (logRt *LogRt) {
 		Logger:        lgr,
 	}
 
-	// always redact for basic auth
+	// always redact auth header
 
 	for _, key := range append(redactHeaders, "Authorization") {
 		logRt.RedactHeaders[key] = true

@@ -2,6 +2,8 @@
 // while doing its best to not get in the way :)
 package giant
 
+// Todo: resolve dep tangle with minibike monorepo
+
 import (
 	"bytes"
 	"context"
@@ -16,7 +18,9 @@ import (
 
 	"github.com/clarktrimble/giant/basicrt"
 	"github.com/clarktrimble/giant/logrt"
+	"github.com/clarktrimble/giant/oauth2rt"
 	"github.com/clarktrimble/giant/statusrt"
+	"github.com/clarktrimble/launch"
 	"github.com/pkg/errors"
 )
 
@@ -41,7 +45,7 @@ type Config struct {
 	// User is for basic auth in NewWithTrippers.
 	User string `json:"user,omitempty" desc:"username for basic auth"`
 	// Pass is for basic auth in NewWithTrippers.
-	Pass Redact `json:"pass,omitempty" desc:"password for basic auth"`
+	Pass launch.Redact `json:"pass,omitempty" desc:"password for basic auth"`
 	// Todo: what's this??
 	//KeyHeader string `json:"api_key_header,omitempty" desc:"Todo"`
 	//ApiKey    Redact `json:"api_key_value,omitempty" desc:"Todo and sneak into redact headers"`
@@ -52,6 +56,21 @@ type Config struct {
 	SkipBody bool `json:"skip_body" desc:"skip logging of body for request and response" default:"false"`
 	// UnixSocket
 	UnixSocket string `json:"unix_socket,omitempty" desc:"unix socket"`
+	// OAuth2 is for OAuth2 client credentials in NewWithTrippers.
+	OAuth2 *OAuth2Config `json:"oauth2,omitempty" desc:"OAuth2 client credentials config"`
+}
+
+// OAuth2Config represents OAuth2 client credentials configuration.
+type OAuth2Config struct {
+	// BaseUri is the OAuth2 token endpoint base URI.
+	// If empty, defaults to Config.BaseUri.
+	BaseUri string `json:"base_uri,omitempty" desc:"OAuth2 base URI (defaults to client base_uri)"`
+	// TokenPath is the path to the token endpoint.
+	TokenPath string `json:"token_path" desc:"path to token endpoint" default:"/oauth/token"`
+	// ClientID is the OAuth2 client ID.
+	ClientID string `json:"client_id" desc:"OAuth2 client ID"`
+	// ClientSecret is the OAuth2 client secret.
+	ClientSecret launch.Redact `json:"client_secret" desc:"OAuth2 client secret or path to secret file"`
 }
 
 // Giant represents an http client
@@ -113,10 +132,26 @@ func (cfg *Config) New() *Giant {
 }
 
 // NewWithTrippers is a convenience method that adds StatusRt and Logrt after creating a client.
+// If OAuth2 is defined in Config OAuth2Rt is added as well.
 // If User and Pass are defined in Config BasicRt is added as well.
 func (cfg *Config) NewWithTrippers(lgr logger) (giant *Giant) {
 
 	giant = cfg.New()
+
+	// OAuth2 goes first (innermost) so auth header is set before logging/status
+	if cfg.OAuth2 != nil && cfg.OAuth2.ClientID != "" {
+		baseUri := cfg.OAuth2.BaseUri
+		if baseUri == "" {
+			baseUri = cfg.BaseUri
+		}
+		giant.Use(&oauth2rt.OAuth2Rt{
+			BaseUri:      baseUri,
+			TokenPath:    cfg.OAuth2.TokenPath,
+			ClientID:     cfg.OAuth2.ClientID,
+			ClientSecret: string(cfg.OAuth2.ClientSecret),
+			Logger:       lgr,
+		})
+	}
 
 	giant.Use(&statusrt.StatusRt{})
 	giant.Use(logrt.New(lgr, cfg.RedactHeaders, cfg.SkipBody))
