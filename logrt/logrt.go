@@ -113,9 +113,12 @@ func (rt *LogRt) responseFields(response *http.Response, start time.Time) (field
 		fields = append(fields, response.Request.URL.Path)
 	}
 
-	if !rt.SkipBody {
+	if !rt.SkipBody && response.ContentLength >= 0 {
 
 		// read body and put it back
+		// skip for streaming responses (unknown length)
+		// Todo: could also check Transfer-Encoding: chunked or
+		// Content-Type: text/event-stream, application/x-ndjson
 
 		body, err := read(response.Body)
 		if err != nil {

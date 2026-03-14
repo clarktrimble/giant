@@ -278,6 +278,39 @@ var _ = Describe("Giant", func() {
 				})
 			})
 
+			When("server returns a redirect", func() {
+				var (
+					redirectServer *httptest.Server
+				)
+				BeforeEach(func() {
+					redirectServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						http.Redirect(w, r, "/other", http.StatusFound)
+					}))
+					gnt = &Giant{
+						Client: http.Client{
+							CheckRedirect: func(req *http.Request, via []*http.Request) error {
+								return fmt.Errorf("no redirects")
+							},
+						},
+						BaseUri: redirectServer.URL,
+					}
+					rq = Request{}
+				})
+				AfterEach(func() {
+					redirectServer.Close()
+				})
+				It("returns error and closes response body", func() {
+					response, err := gnt.Send(ctx, rq)
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(ContainSubstring("no redirects"))
+					// response body should be closed by Send, so reading should fail or be empty
+					if response != nil {
+						_, readErr := io.ReadAll(response.Body)
+						Expect(readErr).To(HaveOccurred())
+					}
+				})
+			})
+
 		})
 	})
 

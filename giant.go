@@ -201,7 +201,12 @@ func (giant *Giant) Send(ctx context.Context, rq Request) (response *http.Respon
 	}
 
 	response, err = giant.Client.Do(request)
-	err = errors.Wrapf(err, "http %s request to %s %s failed", rq.Method, giant.BaseUri, rq.Path)
+	if err != nil {
+		if response != nil {
+			response.Body.Close()
+		}
+		err = errors.Wrapf(err, "http %s request to %s %s failed", rq.Method, giant.BaseUri, rq.Path)
+	}
 	return
 }
 
