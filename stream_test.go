@@ -41,13 +41,11 @@ var _ = Describe("StreamLines", func() {
 		})
 
 		It("iterates over lines", func() {
-			lines, err := gnt.StreamLines(ctx, "GET", "/events")
+			lines, err := gnt.StreamLines(ctx, "/events")
 			Expect(err).ToNot(HaveOccurred())
-			defer lines.Close()
 
 			var received []string
-			for data, err := range lines.All() {
-				Expect(err).ToNot(HaveOccurred())
+			for data := range lines {
 				received = append(received, string(data))
 			}
 

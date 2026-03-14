@@ -3,46 +3,35 @@ package giant
 import (
 	"bufio"
 	"context"
-	"iter"
 	"net/http"
 	"slices"
 
 	"github.com/pkg/errors"
 )
 
-// Todo: consider context cancellation handling - check ctx.Err() in All() loop
-// or verify http.NewRequestWithContext already handles it
+const (
+	// MaxLineSize is the maximum line size for streaming responses.
+	MaxLineSize = 64 * 1024 // 64KB default, increase if needed
+)
 
-// Lines represents a streaming response where each line is a separate item.
-// Common for NDJSON streams, log tailing, or other line-delimited protocols.
+// StreamLines sends a GET request and returns a channel of lines.
+// Uses giant's transport but without timeout for long-lived connections.
+// Channel closes when context is cancelled, stream ends, or error occurs.
 // Example:
 //
-//	lines, err := client.StreamLines(ctx, "GET", "/events")
+//	lines, err := client.StreamLines(ctx, "/events")
 //	if err != nil {
 //	    return err
 //	}
-//	defer lines.Close()
-//
-//	for data, err := range lines.All() {
-//	    if err != nil {
-//	        return err
-//	    }
+//	for data := range lines {
 //	    var event DockerEvent
 //	    json.Unmarshal(data, &event)
 //	    handle(event)
 //	}
-type Lines struct {
-	response *http.Response
-	scanner  *bufio.Scanner
-}
-
-// StreamLines sends a request and returns Lines for iterating over lines.
-// Uses giant's transport but without timeout for long-lived connections.
-// Caller must call Close when done.
-func (giant *Giant) StreamLines(ctx context.Context, method, path string) (lines *Lines, err error) {
+func (giant *Giant) StreamLines(ctx context.Context, path string) (lines <-chan []byte, err error) {
 
 	rq := Request{
-		Method: method,
+		Method: http.MethodGet,
 		Path:   path,
 	}
 
@@ -69,37 +58,41 @@ func (giant *Giant) StreamLines(ctx context.Context, method, path string) (lines
 		return
 	}
 
-	lines = &Lines{
-		response: response,
-		scanner:  bufio.NewScanner(response.Body),
-	}
+	ch := make(chan []byte)
+	go giant.streamLines(ctx, response, ch)
+	lines = ch
+
 	return
 }
 
-// SetBuffer sets the maximum line size. Must be called before All().
-// Default is 64KB.
-func (lines *Lines) SetBuffer(size int) {
+// streamLines reads lines from response body and sends to channel.
+// Context cancellation is checked between lines; a blocked Scan() may not
+// interrupt immediately until the underlying read completes or errors.
+func (giant *Giant) streamLines(ctx context.Context, response *http.Response, ch chan<- []byte) {
 
-	lines.scanner.Buffer(make([]byte, size), size)
-}
+	defer close(ch)
+	defer response.Body.Close()
 
-// All returns an iterator over lines in the stream as raw bytes.
-func (lines *Lines) All() iter.Seq2[[]byte, error] {
+	scanner := bufio.NewScanner(response.Body)
+	scanner.Buffer(make([]byte, MaxLineSize), MaxLineSize)
 
-	return func(yield func([]byte, error) bool) {
-		for lines.scanner.Scan() {
-			if !yield(slices.Clone(lines.scanner.Bytes()), nil) {
-				return
-			}
+	for scanner.Scan() {
+		line := slices.Clone(scanner.Bytes())
+
+		if giant.Logger != nil {
+			giant.Logger.Trace(ctx, "stream line received", "length", len(line))
 		}
-		if err := lines.scanner.Err(); err != nil {
-			yield(nil, err)
+
+		select {
+		case <-ctx.Done():
+			return
+		case ch <- line:
 		}
 	}
-}
 
-// Close closes the underlying response body.
-func (lines *Lines) Close() error {
-
-	return lines.response.Body.Close()
+	err := scanner.Err()
+	if err != nil && giant.Logger != nil {
+		err = errors.Wrap(err, "reading from stream")
+		giant.Logger.Error(ctx, "stream read failed", err)
+	}
 }

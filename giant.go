@@ -83,6 +83,8 @@ type Giant struct {
 	BaseUri string
 	// Headers are set when making a request
 	Headers map[string]string
+	// Logger for streaming errors, awkwardly optional Todo: rethink relative to NewWithTrippers
+	Logger logger.Logger
 }
 
 // New constructs a new client from Config
@@ -139,6 +141,7 @@ func (cfg *Config) New() *Giant {
 func (cfg *Config) NewWithTrippers(lgr logger.Logger) (giant *Giant) {
 
 	giant = cfg.New()
+	giant.Logger = lgr
 
 	// OAuth2 goes first (innermost) so auth header is set before logging/status
 	if cfg.OAuth2 != nil && cfg.OAuth2.ClientID != "" {
